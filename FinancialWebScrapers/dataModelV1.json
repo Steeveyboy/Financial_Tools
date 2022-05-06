@@ -1,0 +1,39 @@
+{
+    "Total revenue": "Revenues",
+    "Total cost": "CostOfRevenue",
+    "Gross profit": "GrossProfit",
+
+    "Selling, general and administrative": "SellingGeneralAndAdministrativeExpense",
+    "Research, development and engineering": "ResearchAndDevelopmentExpense",
+
+    "Interest expense": "InterestExpense",
+    "Total expense and other (income)": null,
+    
+    "Income before taxes": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+    "Provision for/(benefit from) income taxes": "IncomeTaxExpenseBenefit",
+
+    "Net income": "NetIncomeLoss",
+    
+    "EPS Diluted Total": "EarningsPerShareDiluted",
+    "EPS Basic Total": "EarningsPerShareBasic",
+    "Shares Outstanding Assuming dilution": "WeightedAverageNumberOfDilutedSharesOutstanding",
+    "Shares Outstanding Basic": "WeightedAverageNumberOfSharesOutstandingBasic",
+
+    "Foreign currency translation adjustments": "OtherComprehensiveIncomeForeignCurrencyTransactionAndTranslationAdjustmentBeforeTaxPortionAttributableToParent",
+    "Total net changes related to available-for-sale securities": "OtherComprehensiveIncomeAvailableforsaleSecuritiesAdjustmentBeforeTaxPortionAttributableToParent",
+    "Total unrealized gains/(losses) on cash flow hedges": "OtherComprehensiveIncomeLossCashFlowHedgeGainLossAfterReclassificationBeforeTaxParent",
+    "Total retirement-related benefit plans": "OtherComprehensiveIncomeDefinedBenefitPlansAdjustmentBeforeTaxPortionAttributableToParent",
+    "Other comprehensive income/(loss), before tax": "OtherComprehensiveIncomeLossBeforeTaxPortionAttributableToParent",
+    "Income tax (expense)/benefit related to items of other comprehensive income": "OtherComprehensiveIncomeLossTaxPortionAttributableToParent1",
+    "Other comprehensive income/(loss), net of tax": "OtherComprehensiveIncomeLossNetOfTaxPortionAttributableToParent",
+    "Total comprehensive income": "NetIncomeLoss",
+    
+
+    "Total current assets": "AssetsCurrent",
+    "Total assets": "Assets",
+    "Total current liabilities": "LiabilitiesCurrent",
+    "Total liabilities": "Liabilities",
+    "Retained earnings": "RetainedEarningsAccumulatedDeficit",
+    "Total equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    "Total liabilities and equity": "LiabilitiesAndStockholdersEquity"
+}
