@@ -1,5 +1,16 @@
 import pandas as pd
+import requests
 import json
+
+allTickers = json.loads(open("tickers.json", 'r').read())
+
+def requestStock(ticker):
+    cik = allTickers[ticker]['cik']
+    user_agent = {"user-agent": "www.jonsteeves.dev jonathonsteeves@cmail.carleton.ca"}
+    companyFacts = "https://data.sec.gov/api/xbrl/companyfacts/CIK{:010d}.json".format(cik)
+    res = requests.get(companyFacts, headers=user_agent)
+    print(res.status_code)
+    return dict(res.json())
 
 def keyQuarters(ls):
     newls = []
