@@ -20,9 +20,6 @@
     "AccumulatedOtherComprehensiveIncomeLossNetOfTax": {
         "description": "Accumulated change in equity from transactions and other events and circumstances from non-owner sources, net of tax effect, at period end. Excludes Net Income (Loss), and accumulated changes in equity from transactions resulting from investments by owners and distributions to owners. Includes foreign currency translation items, certain pension adjustments, unrealized gains and losses on certain investments in debt and equity securities, other than temporary impairment (OTTI) losses related to factors other than credit losses on available-for-sale and held-to-maturity debt securities that an entity does not intend to sell and it is not more likely than not that the entity will be required to sell before recovery of the amortized cost basis, as well as changes in the fair value of derivatives related to the effective portion of a designated cash flow hedge."
     },
-    "AcquiredFiniteLivedIntangibleAssetWeightedAverageUsefulLife": {
-        "description": "The calculated weighted-average amortization period of a major class of finite-lived intangible assets acquired during the current period either individually or as part of a group of assets (in either an asset acquisition or business combination). A major class is composed of intangible assets that can be grouped together because they are similar, either by their nature or by their use in the operations of a company."
-    },
     "AdjustmentsRelatedToTaxWithholdingForShareBasedCompensation": {
         "description": "Amount of decrease to equity for grantee's tax withholding obligation for award under share-based payment arrangement."
     },
@@ -101,44 +98,11 @@
     "AvailableForSaleSecuritiesGrossRealizedGains": {
         "description": "This item represents the gross profit realized on the sale of debt or equity securities categorized neither as held-to-maturity nor trading securities."
     },
-    "AvailableForSaleSecuritiesGrossRealizedGainsLossesSaleProceeds": {
-        "description": "The total amount of proceeds received for the sale of securities, categorized neither as held-to-maturity nor trading securities, during the reporting period."
-    },
     "AvailableForSaleSecuritiesGrossRealizedLosses": {
         "description": "This item represents the gross loss realized on the sale of debt or equity securities categorized neither as held-to-maturity nor trading securities."
     },
-    "BusinessAcquisitionCostOfAcquiredEntityCashPaid": {
-        "description": "Amount of cash paid to acquire the entity."
-    },
-    "BusinessAcquisitionCostOfAcquiredEntityPurchasePrice": {
-        "description": "The total cost of the acquired entity including the cash paid to shareholders of acquired entities, fair value of debt and equity securities issued to shareholders of acquired entities, the fair value of the liabilities assumed, and direct costs of the acquisition."
-    },
     "BusinessAcquisitionPercentageOfVotingInterestsAcquired": {
         "description": "Percentage of voting equity interests acquired at the acquisition date in the business combination."
-    },
-    "BusinessAcquisitionPurchasePriceAllocationAssetsAcquired": {
-        "description": "The amount of acquisition cost of a business combination allocated to assets acquired."
-    },
-    "BusinessAcquisitionPurchasePriceAllocationAssetsAcquiredLiabilitiesAssumedNet": {
-        "description": "The total purchase price of the acquired entity. This includes cash paid to equity interest holders of the acquired entity, fair value of debt and equity securities issued to equity holders of the acquired entity, and transaction costs paid to third parties to consummate the acquisition."
-    },
-    "BusinessAcquisitionPurchasePriceAllocationCurrentAssets": {
-        "description": "The amount of acquisition cost of a business combination allocated to current assets."
-    },
-    "BusinessAcquisitionPurchasePriceAllocationCurrentLiabilities": {
-        "description": "The amount of acquisition cost of a business combination allocated to current liabilities of the acquired entity."
-    },
-    "BusinessAcquisitionPurchasePriceAllocationGoodwillAmount": {
-        "description": "Amount of goodwill arising from a business combination, which is the excess of the cost of the acquired entity over the amounts assigned to assets acquired and liabilities assumed."
-    },
-    "BusinessAcquisitionPurchasePriceAllocationLiabilitiesAssumed": {
-        "description": "The amount of acquisition cost of a business combination allocated to liabilities assumed."
-    },
-    "BusinessAcquisitionPurchasePriceAllocationNoncurrentLiabilities": {
-        "description": "The amount of acquisition cost of a business combination allocated to noncurrent liabilities of the acquired entity."
-    },
-    "BusinessAcquisitionPurchasePriceAllocationPropertyPlantAndEquipment": {
-        "description": "The amount of acquisition cost of a business combination allocated to property, plant and equipment to be used in ongoing operations."
     },
     "BusinessCombinationConsiderationTransferred1": {
         "description": "Amount of consideration transferred, consisting of acquisition-date fair value of assets transferred by the acquirer, liabilities incurred by the acquirer, and equity interest issued by the acquirer."
@@ -215,9 +179,6 @@
     "CashProvidedByUsedInOperatingActivitiesDiscontinuedOperations": {
         "description": "Amount of cash inflow (outflow) of operating activities of discontinued operations. Operating activity cash flows include transactions, adjustments, and changes in value not defined as investing or financing activities."
     },
-    "ChangeInUnrealizedGainLossOnHedgedItemInFairValueHedge": {
-        "description": "The amount recognized in earnings related to the change in fair value during the period of the hedged item in a fair value hedge."
-    },
     "ChangeInUnrealizedGainLossOnHedgedItemInFairValueHedge1": {
         "description": "Amount of the increase (decrease) in fair value of the hedged item in a fair value hedge recognized in the income statement."
     },
@@ -232,9 +193,6 @@
     },
     "CommonStockDividendsPerShareDeclared": {
         "description": "Aggregate dividends declared during the period for each share of common stock outstanding."
-    },
-    "CommonStockIncludingAdditionalPaidInCapital": {
-        "description": "Aggregate of par value plus amounts in excess of par value or issuance value (in cases of no-par value stock) for common stock held by shareholders. Aggregate value for common stock issued and outstanding."
     },
     "CommonStockParOrStatedValuePerShare": {
         "description": "Face amount or stated value per share of common stock."
@@ -278,23 +236,11 @@
     "CostMethodInvestments": {
         "description": "Amount, after adjustment, of cost-method investment. Adjustments include, but are not limited to, dividends received in excess of earnings after date of investment that are considered a return of investment and other than temporary impairments."
     },
-    "CostOfGoodsSold": {
-        "description": "Total costs related to goods produced and sold during the reporting period."
-    },
     "CostOfGoodsSoldSalesTypeLease": {
         "description": "Cost of goods sold for sales-type financing lease."
     },
     "CostOfRevenue": {
         "description": "The aggregate cost of goods produced and sold and services rendered during the reporting period."
-    },
-    "CostOfServices": {
-        "description": "Total costs related to services rendered by an entity during the reporting period."
-    },
-    "CumulativeEffectOfInitialAdoptionOfFIN48": {
-        "description": "Cumulative net-of-tax effect of initial adoption of FIN 48 - Accounting for Uncertainty in Income Taxes on the opening balance of retained earnings. The cumulative-effect adjustment does not include items that would not be recognized in earnings, such as the effect of adopting this Interpretation on tax positions related to business combinations. The amount of that cumulative-effect adjustment is the difference between the net amount of assets and liabilities recognized in the statement of financial position prior to the application of this Interpretation and the net amount of assets and liabilities recognized as a result of applying the provisions of this Interpretation."
-    },
-    "CumulativeEffectOfNewAccountingPrincipleInPeriodOfAdoption": {
-        "description": "Amount after tax of increase (decrease) to equity or (increase) decrease to net assets, resulting from the cumulative effect adjustment of a new accounting principle applied in the period of adoption."
     },
     "CurrentFederalTaxExpenseBenefit": {
         "description": "Amount of current federal tax expense (benefit) pertaining to income (loss) from continuing operations."
@@ -470,17 +416,8 @@
     "DefinedBenefitPlanExpectedFutureBenefitPaymentsYearTwo": {
         "description": "Amount of benefit for defined benefit plan expected to be paid in second fiscal year following current fiscal year."
     },
-    "DefinedBenefitPlanGrossPrescriptionDrugSubsidyReceiptsReceived": {
-        "description": "Amount of the period's gross receipts received from the prescription drug subsidy, which is to be used in the roll forward of the accumulated postretirement benefit obligation of an applicable postretirement benefit plan."
-    },
     "DefinedBenefitPlanNetPeriodicBenefitCost": {
         "description": "Amount of net periodic benefit cost (credit) for defined benefit plan."
-    },
-    "DefinedBenefitPlanPlansWithBenefitObligationsInExcessOfPlanAssetsAggregateBenefitObligation": {
-        "description": "Amount of benefit obligation for defined benefit plan with benefit obligation in excess of plan assets."
-    },
-    "DefinedBenefitPlanPlansWithBenefitObligationsInExcessOfPlanAssetsAggregateFairValueOfPlanAssets": {
-        "description": "Fair value of plan assets for defined benefit plan with benefit obligation in excess of plan assets."
     },
     "DefinedContributionPlanCostRecognized": {
         "description": "Amount of cost for defined contribution plan."
@@ -494,17 +431,8 @@
     "Depreciation": {
         "description": "The amount of expense recognized in the current period that reflects the allocation of the cost of tangible assets over the assets' useful lives. Includes production and non-production related depreciation."
     },
-    "DerivativeAssetDesignatedAsHedgingInstrumentFairValue": {
-        "description": "Fair value of a derivative asset (or nonderivative instrument) that is designated and qualifies as a hedging instrument, presented on a gross basis even when the derivative instrument is subject to master netting arrangements and qualifies for net presentation in the statement of financial position."
-    },
     "DerivativeAssetFairValueGrossAssetIncludingNotSubjectToMasterNettingArrangement": {
         "description": "Fair value, before effects of master netting arrangements, of a financial asset or other contract with one or more underlyings, notional amount or payment provision or both, and the contract can be net settled by means outside the contract or delivery of an asset. Includes assets not subject to a master netting arrangement and elected not to be offset."
-    },
-    "DerivativeAssetFairValueNet": {
-        "description": "Fair value of the gross assets less the gross liabilities of a derivative asset or group of derivative assets."
-    },
-    "DerivativeAssetNotDesignatedAsHedgingInstrumentFairValue": {
-        "description": "Fair value of a derivative asset that is not designated or qualifying as a hedging instrument, presented on a gross basis even when the derivative instrument is subject to master netting arrangements and qualifies for net presentation in the statement of financial position."
     },
     "DerivativeAssetNotOffsetPolicyElectionDeduction": {
         "description": "Fair value of financial asset or other contract with one or more underlyings, notional amount or payment provision or both, and the contract can be net settled by means outside the contract or delivery of an asset, elected not to be offset, deducted from derivative assets."
@@ -545,32 +473,17 @@
     "DerivativeInstrumentsGainLossRecognizedInIncomeIneffectivePortionAndAmountExcludedFromEffectivenessTestingNet": {
         "description": "The portion of gains and losses (net) on derivative instruments designated and qualifying as hedging instruments representing (a) the amount of the hedge ineffectiveness and (b) the amount, if any, excluded from the assessment of hedge effectiveness."
     },
-    "DerivativeInstrumentsGainLossRecognizedInIncomeNet": {
-        "description": "The amount of net gains and losses recognized in income during the period on derivative instruments designated and qualifying as hedging instruments in fair value hedges and related hedged items designated and qualifying in fair value hedges, on derivative instruments designated and qualifying as hedging instruments in cash flow hedges, and on derivative instruments not designated as hedging instruments."
-    },
-    "DerivativeInstrumentsGainLossRecognizedInOtherComprehensiveIncomeEffectivePortionNet": {
-        "description": "The effective portion of gains and losses (net) on derivative instruments designated and qualifying as hedging instruments that was recognized in other comprehensive income during the current period."
-    },
     "DerivativeLiabilities": {
         "description": "Fair value, after the effects of master netting arrangements, of a financial liability or contract with one or more underlyings, notional amount or payment provision or both, and the contract can be net settled by means outside the contract or delivery of an asset. Includes liabilities not subject to a master netting arrangement and not elected to be offset."
     },
     "DerivativeLiabilitiesNoncurrent": {
         "description": "Fair value, after the effects of master netting arrangements, of a financial liability or contract with one or more underlyings, notional amount or payment provision or both, and the contract can be net settled by means outside the contract or delivery of an asset, expected to be settled after one year or the normal operating cycle, if longer. Includes assets not subject to a master netting arrangement and not elected to be offset."
     },
-    "DerivativeLiabilityDesignatedAsHedgingInstrumentFairValue": {
-        "description": "Fair value of a derivative liability (or nonderivative instrument) that is designated and qualifies as a hedging instrument, presented on a gross basis even when the derivative instrument is subject to master netting arrangements and qualifies for net presentation in the statement of financial position."
-    },
     "DerivativeLiabilityFairValueGrossAsset": {
         "description": "Fair value of asset associated with financial liability or contract with one or more underlyings, notional amount or payment provision or both, and the contract can be net settled by means outside the contract or delivery of an asset."
     },
     "DerivativeLiabilityFairValueGrossLiabilityIncludingNotSubjectToMasterNettingArrangement": {
         "description": "Fair value, before effects of master netting arrangements, of a financial liability or contract with one or more underlyings, notional amount or payment provision or both, and the contract can be net settled by means outside the contract or delivery of an asset. Includes liabilities not subject to a master netting arrangement and elected not to be offset."
-    },
-    "DerivativeLiabilityFairValueNet1": {
-        "description": "Fair value of the gross liabilities less the gross assets of a derivative liability or group of derivative liabilities."
-    },
-    "DerivativeLiabilityNotDesignatedAsHedgingInstrumentFairValue": {
-        "description": "Fair value of a derivative liability that is not designated or qualifying as a hedging instrument, presented on a gross basis even when the derivative instrument is subject to master netting arrangements and qualifies for net presentation in the statement of financial position."
     },
     "DerivativeLiabilityNotOffsetPolicyElectionDeduction": {
         "description": "Fair value of financial liability or contract with one or more underlyings, notional amount or payment provision or both, and the contract can be net settled by means outside the contract or delivery of an asset, elected not to be offset, deducted from derivative liabilities."
@@ -653,26 +566,11 @@
     "EmployeeServiceShareBasedCompensationAllocationOfRecognizedPeriodCostsCapitalizedAmount": {
         "description": "Amount of cost capitalized for award under share-based payment arrangement."
     },
-    "EmployeeServiceShareBasedCompensationCashReceivedFromExerciseOfStockOptions": {
-        "description": "Aggregate proceeds received by the entity during the annual period from exercises of stock or unit options and conversion of similar instruments granted under equity-based payment arrangements."
-    },
     "EmployeeServiceShareBasedCompensationNonvestedAwardsTotalCompensationCostNotYetRecognized": {
         "description": "Amount of cost not yet recognized for nonvested award under share-based payment arrangement."
     },
-    "EmployeeServiceShareBasedCompensationNonvestedAwardsTotalCompensationCostNotYetRecognizedPeriodForRecognition": {
-        "description": "The weighted average period over which unrecognized compensation is expected to be recognized for equity-based compensation plans, using a decimal to express in number of years."
-    },
     "EmployeeServiceShareBasedCompensationTaxBenefitFromCompensationExpense": {
         "description": "Amount of tax benefit for recognition of expense of award under share-based payment arrangement."
-    },
-    "EmployeeServiceShareBasedCompensationTaxBenefitRealizedFromExerciseOfStockOptions": {
-        "description": "Disclosure of the aggregate tax benefit realized from the exercise of stock options and the conversion of similar instruments during the annual period."
-    },
-    "EmployeeServiceShareBasedCompensationUnrecognizedCompensationCostsOnNonvestedAwards": {
-        "description": "As of the latest balance sheet date presented, the total compensation cost related to outstanding, nonvested equity-based compensation awards not yet recognized (will be charged against earnings as services are performed or other vesting criteria are met)."
-    },
-    "EmployeeServiceShareBasedCompensationUnrecognizedCompensationCostsOnNonvestedAwardsWeightedAveragePeriodOfRecognition": {
-        "description": "The weighted average period over which unrecognized equity-based compensation costs are expected to be reported."
     },
     "EquityMethodInvestmentOtherThanTemporaryImpairment": {
         "description": "This item represents an other than temporary decline in value that has been recognized against an investment accounted for under the equity method of accounting. The excess of the carrying amount over the fair value of the investment represents the amount of the write down which is or was reflected in earnings. The written down value is a new cost basis with the adjusted value of the investment becoming its new carrying value subject to the equity accounting method. Evidence of a loss in value might include, but would not necessarily be limited to, absence of an ability to recover the carrying amount of the investment or inability of the investee to sustain an earnings capacity which would justify the carrying amount of the investment."
@@ -688,9 +586,6 @@
     },
     "FairValueAssetsLevel2ToLevel1TransfersAmount": {
         "description": "Amount of transfers of assets measured on a recurring basis out of Level 2 of the fair value hierarchy into Level 1."
-    },
-    "FairValueAssetsMeasuredOnRecurringBasisCashAndCashEquivalents": {
-        "description": "This element represents a certain statement of financial position asset caption which represents a class of assets, or which may include an individual asset, measured at fair value on a recurring basis."
     },
     "FairValueLiabilitiesLevel1ToLevel2TransfersAmount": {
         "description": "Amount of transfers of liabilities measured on a recurring basis out of Level 1 of the fair value hierarchy into Level 2."
@@ -749,26 +644,14 @@
     "FinancialLiabilitiesFairValueDisclosure": {
         "description": "Fair value of financial obligations, including, but not limited to, debt instruments, derivative liabilities, federal funds purchased and sold under agreements to repurchase, securities loaned or sold under agreements to repurchase, financial instruments sold not yet purchased, guarantees, line of credit, loans and notes payable, servicing liability, and trading liabilities."
     },
-    "FinancialServicesCosts": {
-        "description": "The aggregate costs incurred during the reporting period related to financial services rendered by an entity."
-    },
-    "FinancialServicesRevenue": {
-        "description": "The aggregate financial services revenue and operating interest income earned during the reporting period."
-    },
     "FinancingReceivableAllowanceForCreditLosses": {
         "description": "Amount of allowance for credit loss on financing receivable. Excludes allowance for financing receivable covered under loss sharing agreement."
     },
     "FinancingReceivableAllowanceForCreditLossesCollectivelyEvaluatedForImpairment": {
         "description": "The valuation allowance for financing receivables that are expected to be uncollectible that were collectively evaluated for impairment."
     },
-    "FinancingReceivableAllowanceForCreditLossesIndividuallyEvaluatedForImpairment": {
-        "description": "The valuation allowance for financing receivables that are expected to be uncollectible that were individually evaluated for impairment."
-    },
     "FinancingReceivableAllowanceForCreditLossesIndividuallyEvaluatedForImpairment1": {
         "description": "Amount of valuation allowance for financing receivables that are expected to be uncollectible that were individually evaluated for impairment."
-    },
-    "FinancingReceivableAllowanceForCreditLossesProvisions": {
-        "description": "Charge to expense for financing receivables that are expected to be uncollectible."
     },
     "FinancingReceivableAllowanceForCreditLossesWriteOffs": {
         "description": "Amount of writeoff of financing receivable, charged against allowance for credit loss."
@@ -788,9 +671,6 @@
     "FinancingReceivableRecordedInvestmentCurrent": {
         "description": "Amount of financing receivable not past due."
     },
-    "FinancingReceivableRecordedInvestmentEqualToGreaterThan90DaysPastDue": {
-        "description": "Financing receivables that are equal to or greater than 90 days past due."
-    },
     "FinancingReceivableRecordedInvestmentNonaccrualStatus": {
         "description": "Amount of financing receivable on nonaccrual status."
     },
@@ -799,9 +679,6 @@
     },
     "FiniteLivedIntangibleAssetsAccumulatedAmortization": {
         "description": "Accumulated amount of amortization of assets, excluding financial assets and goodwill, lacking physical substance with a finite life."
-    },
-    "FiniteLivedIntangibleAssetsAmortizationExpense": {
-        "description": "Aggregate amount of intangible asset amortization recognized as expense during the period."
     },
     "FiniteLivedIntangibleAssetsAmortizationExpenseAfterYearFive": {
         "description": "Amount of amortization for asset, excluding financial asset and goodwill, lacking physical substance with finite life expected to be recognized after fifth fiscal year following current fiscal year. Excludes interim and annual periods when interim periods are reported from current statement of financial position date (rolling approach)."
@@ -838,24 +715,6 @@
     },
     "ForeignIncomeTaxExpenseBenefitContinuingOperations": {
         "description": "Amount of current and deferred foreign income tax expense (benefit) attributable to income (loss) from continuing operations."
-    },
-    "FutureAmortizationExpenseRemainderOfFiscalYear": {
-        "description": "The amount of amortization expense expected to be recognized during the remainder of the current fiscal year."
-    },
-    "FutureAmortizationExpenseYearFive": {
-        "description": "The amount of amortization expense expected to be recognized during year five of the five succeeding fiscal years."
-    },
-    "FutureAmortizationExpenseYearFour": {
-        "description": "The amount of amortization expense expected to be recognized during year four of the five succeeding fiscal years."
-    },
-    "FutureAmortizationExpenseYearOne": {
-        "description": "The amount of amortization expense expected to be recognized during year one of the five succeeding fiscal years."
-    },
-    "FutureAmortizationExpenseYearThree": {
-        "description": "The amount of amortization expense expected to be recognized during year three of the five succeeding fiscal years."
-    },
-    "FutureAmortizationExpenseYearTwo": {
-        "description": "The amount of amortization expense expected to be recognized during year two of the five succeeding fiscal years."
     },
     "FutureMinimumSubleaseRentalsSaleLeasebackTransactionsThereafter": {
         "description": "Amount of minimum sublease rentals for sale-leaseback transactions accounted for using the deposit method or as a financing to be received by the seller-lessee after the fifth fiscal year following the latest fiscal year. Excludes interim and annual periods when interim periods are reported on a rolling approach, from latest balance sheet date."
@@ -902,9 +761,6 @@
     "GoodwillAcquiredDuringPeriod": {
         "description": "Amount of increase in asset representing future economic benefits arising from other assets acquired in a business combination that are not individually identified and separately recognized resulting from a business combination."
     },
-    "GoodwillAllocationAdjustment": {
-        "description": "Purchase price allocation adjustment for allocation not yet complete at the prior year end."
-    },
     "GoodwillForeignCurrencyTranslationGainLoss": {
         "description": "Amount of foreign currency translation gain (loss) which increases (decreases) an asset representing future economic benefits from other assets acquired in a business combination that are not individually identified and separately recognized."
     },
@@ -916,9 +772,6 @@
     },
     "GoodwillPurchaseAccountingAdjustments": {
         "description": "Amount of increase (decrease) from adjustments after acquisition date under purchase accounting of an asset representing the future economic benefits arising from other assets acquired in a business combination that are not individually identified and separately recognized."
-    },
-    "GoodwillTranslationAdjustments": {
-        "description": "Amount of increase (decrease) from foreign currency translation adjustments of an asset representing future economic benefits arising from other assets acquired in a business combination that are not individually identified and separately recognized."
     },
     "GoodwillTranslationAndPurchaseAccountingAdjustments": {
         "description": "Amount of increase (decrease) from foreign currency translation adjustments and purchase accounting adjustments of an asset representing future economic benefits arising from other assets acquired in a business combination that are not individually identified and separately recognized."
@@ -991,9 +844,6 @@
     },
     "IncomeTaxEffectsAllocatedDirectlyToEquityCumulativeEffectOfChangeInAccountingPrinciple": {
         "description": "Amount of cumulative tax effect on beginning retained earnings from change in accounting principle."
-    },
-    "IncomeTaxExaminationRangeOfPossibleLosses": {
-        "description": "The estimated range of reasonably possible losses resulting from an adverse position taken by a taxing authority."
     },
     "IncomeTaxExpenseBenefit": {
         "description": "Amount of current income tax expense (benefit) and deferred income tax expense (benefit) pertaining to continuing operations."
@@ -1217,9 +1067,6 @@
     "MinorityInterestPeriodIncreaseDecrease": {
         "description": "Net Increase or Decrease in balance of noncontrolling interest in the subsidiary during the reporting period."
     },
-    "MultiemployerPlanPeriodContributions": {
-        "description": "Amount of contributions made to multiemployer plans by the employer. A multiemployer plan is a pension or postretirement benefit plan to which two or more unrelated employers contribute where assets contributed by one participating employer may be used to provide benefits to employees of other participating employers."
-    },
     "NetCashProvidedByUsedInContinuingOperations": {
         "description": "The increase (decrease) in cash associated with the entity's continuing operating, investing, and financing activities. While for technical reasons this element has no balance attribute, the default assumption is a debit balance consistent with its label."
     },
@@ -1273,21 +1120,6 @@
     },
     "NotesReceivableNet": {
         "description": "Amount, after allowance for credit loss, of financing receivable. Excludes financing receivable covered under loss sharing agreement."
-    },
-    "NotionalAmountOfDerivativeInstrumentsDesignatedAsNetInvestmentHedges": {
-        "description": "Aggregate notional amount of all derivatives designated as a hedge of a net investment in a foreign operation. The notional amount relates to a number of currency units, shares, bushels, pounds, or other units specified in a derivative instrument."
-    },
-    "NotionalAmountOfForeignCurrencyDerivativeInstrumentsNotDesignatedAsHedgingInstruments": {
-        "description": "Aggregate notional amount of all foreign currency derivatives not designated as hedging instruments. Notional amount refers to the number of currency units specified in the foreign currency derivative contract."
-    },
-    "NotionalAmountOfInterestRateDerivatives": {
-        "description": "Aggregate notional amount of interest rate derivatives, which relates to the currency amount specified in the interest rate derivative instruments."
-    },
-    "NotionalAmountOfInterestRateFairValueHedgeDerivatives": {
-        "description": "Aggregate notional amount of all interest rate derivatives designated as hedging instruments in fair value hedges. Notional amount refers to the monetary amount specified in the interest rate derivative contract."
-    },
-    "NotionalAmountOfPriceRiskDerivatives": {
-        "description": "Aggregate notional amount of price risk derivatives, which relates to the monetary amount specified in the price risk derivative instruments. Excludes notional amounts on derivatives expressed in nonmonetary units."
     },
     "NumberOfBusinessesAcquired": {
         "description": "The number of businesses acquired by the entity during the period."
@@ -1349,47 +1181,17 @@
     "OtherAssetsNoncurrent": {
         "description": "Amount of noncurrent assets classified as other."
     },
-    "OtherComprehensiveIncomeAmortizationOfDefinedBenefitPlanNetPriorServiceCostCreditRecognizedInNetPeriodicBenefitCostBeforeTax": {
-        "description": "The change in other comprehensive income due to the amortization of the net prior service costs (credit) into net periodic pension costs."
-    },
-    "OtherComprehensiveIncomeAmortizationOfDefinedBenefitPlanNetPriorServiceCostRecognizedInNetPeriodicPensionCostNetOfTax": {
-        "description": "The adjustment out of other comprehensive income for prior service costs recognized as a component of net period benefit cost during the period, after tax."
-    },
-    "OtherComprehensiveIncomeAmortizationOfDefinedBenefitPlanNetPriorServiceCostRecognizedInNetPeriodicPensionCostTax": {
-        "description": "Tax effect of the income statement impact of the reclassification adjustment for prior service costs recognized as a component of net period benefit cost."
-    },
-    "OtherComprehensiveIncomeAvailableForSaleSecuritiesAdjustmentBeforeTaxPeriodIncreaseDecrease": {
-        "description": "Gross appreciation or the gross loss in value of the total of unsold available-for-sale securities (except when designated as a fair value hedge or which had been determined to have had an other than temporary decline in fair value below its amortized cost basis). While for technical reasons this element has no balance attribute, the default assumption is a credit balance consistent with its label."
-    },
-    "OtherComprehensiveIncomeAvailableForSaleSecuritiesAdjustmentNetOfTaxPeriodIncreaseDecrease": {
-        "description": "Gross appreciation or the gross loss in value of the total unsold securities. While for technical reasons this element has no balance attribute, the default assumption is a credit balance consistent with its label."
-    },
-    "OtherComprehensiveIncomeAvailableForSaleSecuritiesTax": {
-        "description": "Tax effect of the gross appreciation or the gross loss, net of reclassification adjustment, in the value of the total unsold available-for-sale securities at the end of an accounting period."
-    },
     "OtherComprehensiveIncomeAvailableforsaleSecuritiesAdjustmentBeforeTaxPortionAttributableToParent": {
         "description": "Amount before tax, after reclassification adjustments, of appreciation (loss) in value of unsold available-for-sale securities, attributable to parent entity. Excludes amounts related to other than temporary impairment (OTTI) loss."
     },
     "OtherComprehensiveIncomeDefinedBenefitPlanNetPriorServiceCostCreditArisingDuringPeriodBeforeTax": {
         "description": "Amount, before tax, of cost (credit) of benefit change attributable to participants' prior service from plan amendment or plan initiation of defined benefit plan, that has not been recognized in net periodic benefit cost (credit)."
     },
-    "OtherComprehensiveIncomeDefinedBenefitPlanNetPriorServiceCostsArisingDuringPeriodTax": {
-        "description": "Tax effect on the cost of benefit improvement resulting from a plan amendment that occurred during the period. The cost has not been recognized in net periodic benefit cost pursuant. A plan amendment includes provisions that grant increased benefits based on service rendered in prior periods."
-    },
     "OtherComprehensiveIncomeDefinedBenefitPlanNetPriorServiceCostsCreditArisingDuringPeriodNetOfTax": {
         "description": "Amount, after tax, of cost (credit) of benefit change attributable to participants' prior service from plan amendment or plan initiation of defined benefit plan, that has not been recognized in net periodic benefit cost (credit)."
     },
-    "OtherComprehensiveIncomeDefinedBenefitPlansAdjustmentBeforeTaxPeriodIncreaseDecrease": {
-        "description": "Amounts recognized in other comprehensive income (but not yet recognized in net periodic benefit cost), including the net gain (loss) and net prior service cost (credit) arising during the period. Also includes reclassification adjustments out of other comprehensive income as a result of being recognized as components of net periodic benefit cost for the period. While for technical reasons this element has no balance attribute, the default assumption is a credit balance consistent with its label."
-    },
     "OtherComprehensiveIncomeDefinedBenefitPlansAdjustmentBeforeTaxPortionAttributableToParent": {
         "description": "Amount, before tax, after reclassification adjustment, of (increase) decrease in accumulated other comprehensive (income) loss for defined benefit plan, attributable to parent entity."
-    },
-    "OtherComprehensiveIncomeDefinedBenefitPlansAdjustmentNetOfTaxPeriodIncreaseDecrease": {
-        "description": "The increase (decrease) in accumulated comprehensive income during the period related to pension and other postretirement benefit plans, after tax. While for technical reasons this element has no balance attribute, the default assumption is a credit balance consistent with its label."
-    },
-    "OtherComprehensiveIncomeDefinedBenefitPlansNetUnamortizedGainLossArisingDuringPeriodBeforeTax": {
-        "description": "Pretax change in the value of either the benefit obligation or the plan assets resulting from experience different from that assumed or from a change in an actuarial assumption, or the consequence of a decision to temporarily deviate from the substantive plan, that has not been recognized in net periodic benefit cost."
     },
     "OtherComprehensiveIncomeDefinedBenefitPlansNetUnamortizedGainLossArisingDuringPeriodNetOfTax": {
         "description": "Amount, after tax, of gain (loss) for (increase) decrease in value of benefit obligation for change in actuarial assumptions and increase (decrease) in value of plan assets from experience different from that assumed of defined benefit plan, that has not been recognized in net periodic benefit (cost) credit."
@@ -1397,41 +1199,14 @@
     "OtherComprehensiveIncomeDefinedBenefitPlansNetUnamortizedGainLossArisingDuringPeriodTax": {
         "description": "Amount of tax expense (benefit) for (increase) decrease in value of benefit obligation for change in actuarial assumptions and increase (decrease) in value of plan assets from experience different from that assumed of defined benefit plan, that has not been recognized in net periodic benefit (cost) credit."
     },
-    "OtherComprehensiveIncomeDefinedBenefitPlansTax": {
-        "description": "Tax effects of the increase (decrease) to accumulated comprehensive income during the period related to benefit plans. While for technical reasons this element has no balance attribute, the default assumption is a credit balance consistent with its label."
-    },
-    "OtherComprehensiveIncomeDerivativesQualifyingAsHedgesBeforeTaxPeriodIncreaseDecrease": {
-        "description": "Pre tax change in accumulated gains and losses from derivative instruments designated and qualifying as the effective portion of cash flow hedges, net of reclassifications into earnings during the period. A cash flow hedge is a hedge of the exposure to variability in the cash flows of a recognized asset or liability or a forecasted transaction that is attributable to a particular risk. Includes an entity's share of an equity investee's increase or decrease in deferred hedging gains or losses. While for technical reasons this element has no balance attribute, the default assumption is a credit balance consistent with its label."
-    },
     "OtherComprehensiveIncomeDerivativesQualifyingAsHedgesBeforeTaxPortionAttributableToParent": {
         "description": "Amount before tax, after reclassification adjustments, of increase (decrease) in accumulated gain (loss) from derivative instruments designated and qualifying as the effective portion of cash flow hedges and an entity's share of an equity investee's increase (decrease) in deferred hedging gain (loss), attributable to parent entity."
-    },
-    "OtherComprehensiveIncomeDerivativesQualifyingAsHedgesNetOfTaxPeriodIncreaseDecrease": {
-        "description": "Net of tax effect change in accumulated gains and losses from derivative instruments designated and qualifying as the effective portion of cash flow hedges after taxes. A cash flow hedge is a hedge of the exposure to variability in the cash flows of a recognized asset or liability or a forecasted transaction that is attributable to a particular risk. The change includes an entity's share of an equity investee's increase or decrease in deferred hedging gains or losses. While for technical reasons this element has no balance attribute, the default assumption is a credit balance consistent with its label."
-    },
-    "OtherComprehensiveIncomeDerivativesQualifyingAsHedgesTaxEffectPeriodIncreaseDecrease": {
-        "description": "Total tax effect of the change in accumulated gains and losses from derivative instruments designated and qualifying as the effective portion of cash flow hedges. The change includes an entity's share of an equity investee's increase or decrease in deferred hedging gains or losses. While for technical reasons this element has no balance attribute, the default assumption is a credit balance consistent with its label."
-    },
-    "OtherComprehensiveIncomeFinalizationOfPensionAndNonPensionPostretirementPlanValuationBeforeTax": {
-        "description": "Pre-tax gain (loss) adjustment to other comprehensive income resulting from the settlement or curtailment of the entity's defined benefit pension and other postretirement plans. A settlement is defined as a transaction that (a) is an irrevocable action, (b) relieves the employer or plan of a primary responsibility for a pension benefit obligation, and (c) eliminates significant risks related to the obligations and the assets used to effect the settlement. A curtailment is an event that significantly reduces the expected years of future service of present employees or eliminates for a significant number of employees the accrual of defined benefits for some or all of their future services."
-    },
-    "OtherComprehensiveIncomeFinalizationOfPensionAndNonPensionPostretirementPlanValuationNetOfTax": {
-        "description": "After tax gain (loss) adjustment to other comprehensive income resulting from the settlement or curtailment of the entity's defined benefit pension and other postretirement plans. A settlement is defined as a transaction that (a) is an irrevocable action, (b) relieves the employer or plan of a primary responsibility for a pension benefit obligation, and (c) eliminates significant risks related to the obligations and the assets used to effect the settlement. A curtailment is an event that significantly reduces the expected years of future service of present employees or eliminates for a significant number of employees the accrual of defined benefits for some or all of their future services."
     },
     "OtherComprehensiveIncomeFinalizationOfPensionAndNonPensionPostretirementPlanValuationTax": {
         "description": "Amount of tax expense (benefit) for increase (decrease) to other comprehensive income from settlement and curtailment gain (loss) of defined benefit plan."
     },
-    "OtherComprehensiveIncomeForeignCurrencyTransactionAndTranslationAdjustmentBeforeTaxPeriodIncreaseDecrease": {
-        "description": "Pre tax adjustment that results from the process of translating subsidiary financial statements and foreign equity investments into functional currency of the reporting entity, net of reclassification of realized foreign currency translation gains (losses). Includes gain (loss) on foreign currency forward exchange contracts. Includes foreign currency transactions designated as hedges of net investment in a foreign entity and intercompany foreign currency transactions that are of a long-term nature, when the entities to the transaction are consolidated, combined, or accounted for by the equity method in the reporting enterprise's financial statements. Includes the gain (loss) on a derivative instrument or nonderivative financial instrument that may give rise to a foreign currency transaction gain (loss) that has been designated and qualified as a hedging instrument for hedging of the foreign currency exposure of a net investment in a foreign operation."
-    },
     "OtherComprehensiveIncomeForeignCurrencyTransactionAndTranslationAdjustmentBeforeTaxPortionAttributableToParent": {
         "description": "Amount before tax, after reclassification adjustments of gain (loss) on foreign currency translation adjustments, on foreign currency transactions designated and effective as economic hedges of a net investment in a foreign entity and intra-entity foreign currency transactions that are of a long-term-investment nature, attributable to parent entity."
-    },
-    "OtherComprehensiveIncomeForeignCurrencyTransactionAndTranslationAdjustmentNetOfTaxPeriodIncreaseDecrease": {
-        "description": "Adjustment that results from the process of translating subsidiary financial statements and foreign equity investments into the reporting currency of the reporting entity, net of tax."
-    },
-    "OtherComprehensiveIncomeForeignCurrencyTranslationAdjustmentTax": {
-        "description": "Tax effect of the adjustment that results from the process of translating subsidiary financial statements and foreign equity investments into functional currency of the reporting entity. While for technical reasons this element has no balance attribute, the default assumption is a credit balance consistent with its label."
     },
     "OtherComprehensiveIncomeLossAmortizationAdjustmentFromAOCIPensionAndOtherPostretirementBenefitPlansForNetPriorServiceCostCreditBeforeTax": {
         "description": "Amount, before tax, of reclassification adjustment from accumulated other comprehensive (income) loss for prior service cost (credit) of defined benefit plan."
@@ -1441,15 +1216,6 @@
     },
     "OtherComprehensiveIncomeLossAmortizationAdjustmentFromAOCIPensionAndOtherPostretirementBenefitPlansForNetPriorServiceCostCreditTax": {
         "description": "Amount of tax (expense) benefit of reclassification adjustment from accumulated other comprehensive (income) loss for prior service cost (credit) of defined benefit plan."
-    },
-    "OtherComprehensiveIncomeLossAmortizationPensionAndOtherPostretirementBenefitPlansNetPriorServiceCostRecognizedInNetPeriodicBenefitCostBeforeTax": {
-        "description": "Before tax amount of the income statement impact of the reclassification adjustment for prior service costs recognized as a component of net period benefit cost."
-    },
-    "OtherComprehensiveIncomeLossAmortizationPensionAndOtherPostretirementBenefitPlansNetPriorServiceCostRecognizedInNetPeriodicPensionCostNetOfTax": {
-        "description": "Net of tax amount of the income statement impact of the reclassification adjustment for prior service costs recognized as a component of net period benefit cost."
-    },
-    "OtherComprehensiveIncomeLossAmortizationPensionAndOtherPostretirementBenefitPlansNetPriorServiceCostRecognizedInNetPeriodicPensionCostTaxEffect": {
-        "description": "Tax effect on adjustment out of other comprehensive income for prior service costs recognized as a component of net period benefit cost during the period."
     },
     "OtherComprehensiveIncomeLossAvailableForSaleSecuritiesAdjustmentBeforeTax": {
         "description": "Amount, before tax and after adjustment, of unrealized gain (loss) on investment in debt security measured at fair value with change in fair value recognized in other comprehensive income (available-for-sale) and unrealized gain (loss) on investment in debt security measured at amortized cost (held-to-maturity) from transfer to available-for-sale."
@@ -1465,9 +1231,6 @@
     },
     "OtherComprehensiveIncomeLossBeforeTax": {
         "description": "Amount before tax, after reclassification adjustments of other comprehensive income (loss)."
-    },
-    "OtherComprehensiveIncomeLossBeforeTaxPeriodIncreaseDecrease": {
-        "description": "This element represents Other Comprehensive Income or Loss, Before Tax, for the period. The pretax revenues, expenses, gains, and losses that under generally accepted accounting principles are included in comprehensive income, but excluded from net income. Includes the entity's proportionate share of an investee's equity adjustments for other comprehensive income. While for technical reasons this element has no balance attribute, the default assumption is a credit balance consistent with its label."
     },
     "OtherComprehensiveIncomeLossBeforeTaxPortionAttributableToParent": {
         "description": "Amount before tax of other comprehensive income (loss) attributable to parent entity."
@@ -1508,9 +1271,6 @@
     "OtherComprehensiveIncomeLossNetOfTax": {
         "description": "Amount after tax and reclassification adjustments of other comprehensive income (loss)."
     },
-    "OtherComprehensiveIncomeLossNetOfTaxPeriodIncreaseDecrease": {
-        "description": "This element represents Other Comprehensive Income or Loss, Net of Tax, for the period. Includes deferred gains or losses on qualifying hedges, unrealized holding gains or losses on available-for-sale securities, minimum pension liability, and cumulative translation adjustment. While for technical reasons this element has no balance attribute, the default assumption is a credit balance consistent with its label."
-    },
     "OtherComprehensiveIncomeLossNetOfTaxPortionAttributableToParent": {
         "description": "Amount after tax of other comprehensive income (loss) attributable to parent entity."
     },
@@ -1528,18 +1288,6 @@
     },
     "OtherComprehensiveIncomeLossPensionAndOtherPostretirementBenefitPlansTax": {
         "description": "Amount, after reclassification adjustment, of tax (expense) benefit for (increase) decrease in accumulated other comprehensive income of defined benefit plan."
-    },
-    "OtherComprehensiveIncomeLossReclassificationAdjustmentForSaleOfSecuritiesIncludedInNetIncomeBeforeTax": {
-        "description": "Before tax amount of the income statement impact of the reclassification adjustment for unrealized gain (loss) realized upon the sale of available-for-sale securities."
-    },
-    "OtherComprehensiveIncomeLossReclassificationAdjustmentForSaleOfSecuritiesIncludedInNetIncomeNetOfTax": {
-        "description": "Net of tax amount of the income statement impact of the reclassification adjustment for unrealized gain (loss) realized upon the sale of available-for-sale securities."
-    },
-    "OtherComprehensiveIncomeLossReclassificationAdjustmentForSaleOfSecuritiesIncludedInNetIncomeTax": {
-        "description": "Tax effect of the income statement impact of the reclassification adjustment for unrealized gain (loss) realized upon the sale of available-for-sale securities."
-    },
-    "OtherComprehensiveIncomeLossReclassificationAdjustmentForWritedownOfSecuritiesIncludedInNetIncomeNetOfTax": {
-        "description": "Net of tax amount of the income statement impact of the reclassification adjustment for unrealized (losses) realized upon the write-down of available-for-sale securities."
     },
     "OtherComprehensiveIncomeLossReclassificationAdjustmentFromAOCIForSaleOfSecuritiesBeforeTax": {
         "description": "Amount before tax of reclassification adjustment from accumulated other comprehensive income for unrealized gain (loss) realized upon the sale of available-for-sale securities."
@@ -1568,62 +1316,11 @@
     "OtherComprehensiveIncomeLossReclassificationAdjustmentFromAOCIPensionAndOtherPostretirementBenefitPlansForNetGainLossTax": {
         "description": "Amount of tax expense (benefit) of reclassification adjustment from accumulated other comprehensive income (loss) for gain (loss) of defined benefit plan."
     },
-    "OtherComprehensiveIncomeLossReclassificationAdjustmentOnDerivativesIncludedInNetIncomeBeforeTax": {
-        "description": "Before tax amount of the income statement impact of the reclassification adjustment of accumulated gain (loss) from derivative instruments designated and qualifying as the effective portion of cash flow hedges realized in net income. Also includes reclassification adjustments of an entity's share of an equity investee's deferred hedging gain (loss) realized in net income."
-    },
-    "OtherComprehensiveIncomeLossReclassificationAdjustmentOnDerivativesIncludedInNetIncomeNetOfTax": {
-        "description": "Net of tax amount of the income statement impact of the reclassification adjustment of accumulated gain (loss) from derivative instruments designated and qualifying as the effective portion of cash flow hedges realized in net income. Also includes reclassification adjustments of an entity's share of an equity investee's deferred hedging gain (loss) realized in net income."
-    },
-    "OtherComprehensiveIncomeLossReclassificationAdjustmentOnDerivativesIncludedInNetIncomeTax": {
-        "description": "Tax effect of the income statement impact of the reclassification adjustment of accumulated gain (loss) from derivative instruments designated and qualifying as the effective portion of cash flow hedges realized in net income. Also includes reclassification adjustments of an entity's share of an equity investee's deferred hedging gain (loss) realized in net income."
-    },
-    "OtherComprehensiveIncomeLossReclassificationPensionAndOtherPostretirementBenefitPlansNetGainLossRecognizedInNetPeriodicBenefitCostTax": {
-        "description": "Tax effect of the income statement impact of the reclassification adjustment for actuarial gain (loss) recognized as a component of net periodic benefit cost."
-    },
     "OtherComprehensiveIncomeLossTax": {
         "description": "Amount of tax expense (benefit) allocated to other comprehensive income (loss)."
     },
     "OtherComprehensiveIncomeLossTaxPortionAttributableToParent1": {
         "description": "Amount of tax expense (benefit) allocated to other comprehensive income (loss) attributable to parent entity."
-    },
-    "OtherComprehensiveIncomeReclassificationAdjustmentForSaleOfSecuritiesIncludedInNetIncomeBeforeTax": {
-        "description": "Pre tax reclassification adjustment for gains or losses realized upon the sale of securities."
-    },
-    "OtherComprehensiveIncomeReclassificationAdjustmentForSaleOfSecuritiesIncludedInNetIncomeNetOfTax": {
-        "description": "Reclassification adjustment for unrealized gains or losses realized upon the sale of securities, after tax."
-    },
-    "OtherComprehensiveIncomeReclassificationAdjustmentForSaleOfSecuritiesIncludedInNetIncomeTax": {
-        "description": "Tax effect on the reclassification adjustment for gains or losses realized upon the sale of securities during the period."
-    },
-    "OtherComprehensiveIncomeReclassificationAdjustmentForWriteDownOfSecuritiesIncludedInNetIncomeNetOfTax": {
-        "description": "Reclassification adjustment for unrealized gains or losses realized upon the write-down of securities, after tax."
-    },
-    "OtherComprehensiveIncomeReclassificationAdjustmentOnDerivativesIncludedInNetIncomeBeforeTax": {
-        "description": "Pre tax reclassification adjustment for accumulated gains and losses from derivative instrument designated and qualifying as the effective portion of cash flow hedges included in accumulated comprehensive income that was realized in net income during the period. A cash flow hedge is a hedge of the exposure to variability in the cash flows of a recognized asset or liability or a forecasted transaction that is attributable to a particular risk."
-    },
-    "OtherComprehensiveIncomeReclassificationAdjustmentOnDerivativesIncludedInNetIncomeNetOfTax": {
-        "description": "Net of tax effect of the reclassification adjustment for accumulated gains and losses from derivative instrument designated and qualifying as the effective portion of cash flow hedges included in accumulated comprehensive income that was realized in net income during the period."
-    },
-    "OtherComprehensiveIncomeReclassificationAdjustmentOnDerivativesIncludedInNetIncomeTax": {
-        "description": "Tax effect on reclassification adjustment for accumulated gains and losses from derivative instrument designated and qualifying as the effective portion of cash flow hedges included in accumulated comprehensive income that was realized in net income during the period."
-    },
-    "OtherComprehensiveIncomeReclassificationOfDefinedBenefitPlanNetTransitionAssetObligationRecognizedInNetPeriodicBenefitCostBeforeTax": {
-        "description": "Before tax amount of the income statement impact of the reclassification adjustment for the net transition asset (obligation) recognized as a component of net periodic benefit cost."
-    },
-    "OtherComprehensiveIncomeReclassificationOfDefinedBenefitPlanNetTransitionAssetObligationRecognizedInNetPeriodicBenefitCostNetOfTax": {
-        "description": "Net of tax amount of the income statement impact of the reclassification adjustment for the net transition (asset) obligation recognized as a component of net periodic benefit cost."
-    },
-    "OtherComprehensiveIncomeReclassificationOfDefinedBenefitPlansNetGainLossRecognizedInNetPeriodicBenefitCostBeforeTax": {
-        "description": "Before tax amount of the income statement impact of the reclassification adjustment for actuarial gain (loss) recognized as a component of net periodic benefit cost."
-    },
-    "OtherComprehensiveIncomeReclassificationOfDefinedBenefitPlansNetGainLossRecognizedInNetPeriodicBenefitCostNetOfTax": {
-        "description": "Net of tax amount of the income statement impact of the reclassification adjustment for actuarial (gains) losses recognized as a component of net periodic benefit cost."
-    },
-    "OtherComprehensiveIncomeReclassificationOfDefinedBenefitPlansNetGainLossRecognizedInNetPeriodicBenefitCostTax": {
-        "description": "For each annual statement of income presented, the tax effect of the net gain (loss) recognized in other comprehensive income that is a reclassification adjustment of other comprehensive income as a result of being recognized as a component of net periodic benefit cost for the period."
-    },
-    "OtherComprehensiveIncomeReclassificationOfDefinedBenefitPlantNetTransitionAssetObligationRecognizedInNetPeriodicBenefitCostTax": {
-        "description": "For each annual statement of income presented, the tax effect of the net transition asset or obligation recognized as a reclassification adjustment of other comprehensive income as a result of being recognized as a component of net periodic benefit cost for the period."
     },
     "OtherComprehensiveIncomeUnrealizedGainLossOnDerivativesArisingDuringPeriodBeforeTax": {
         "description": "Amount before tax of increase (decrease) in accumulated gain (loss) from derivative instruments designated and qualifying as the effective portion of cash flow hedges and an entity's share of an equity investee's increase (decrease) in deferred hedging gain (loss)."
@@ -1715,9 +1412,6 @@
     "PrepaidExpenseOtherNoncurrent": {
         "description": "Carrying amount as of the balance sheet date of amounts paid in advance which will be charged against earnings in periods after one year or beyond the operating cycle, if longer."
     },
-    "PrepaidPensionCosts": {
-        "description": "Cumulative employer's contributions in excess of net pension cost recognized, before the adoption of the recognition provisions of FAS 158. Under FAS 158, prepaid pension costs are no longer recognized in the statement of financial position. Note that there is a separate concept for noncurrent assets relating to defined benefit pension and other defined benefit postretirement plans for use under the recognition provisions of FAS 158."
-    },
     "PrepaidTaxes": {
         "description": "Amount of asset related to consideration paid in advance for income and other taxes that provide economic benefits within a future period of one year or the normal operating cycle, if longer."
     },
@@ -1799,9 +1493,6 @@
     "RestructuringReserveNoncurrent": {
         "description": "Carrying amount as of the balance sheet date of known and estimated costs associated with exit from or disposal of business activities or restructurings pursuant to a duly authorized plan, which are expected to be paid after one year or beyond the next operating cycle, if longer. Costs of such activities include those for one-time termination benefits, termination of an operating lease or other contract, consolidating or closing facilities, and relocating employees, and costs associated with an ongoing benefit arrangement, but excludes costs associated with the retirement of a long-lived asset."
     },
-    "RestructuringReserveSettledWithCash": {
-        "description": "Amount of cash paid in the period to fully or partially settle a specified, previously accrued type of restructuring cost."
-    },
     "RetainedEarningsAccumulatedDeficit": {
         "description": "The cumulative amount of the reporting entity's undistributed earnings or deficit."
     },
@@ -1819,12 +1510,6 @@
     },
     "SaleAndLeasebackTransactionGainLossNet": {
         "description": "Amount of gain (loss) on sale and leaseback transaction from transfer of asset accounted for as sale."
-    },
-    "SalesRevenueGoodsNet": {
-        "description": "Aggregate revenue during the period from the sale of goods in the normal course of business, after deducting returns, allowances and discounts."
-    },
-    "SalesRevenueServicesNet": {
-        "description": "Aggregate revenue during the period from services rendered in the normal course of business, after deducting allowances and discounts."
     },
     "SalesTypeAndDirectFinancingLeasesInterestIncome": {
         "description": "Amount of interest income from net investment in sales-type and direct financing leases."
@@ -1865,24 +1550,6 @@
     "SalesTypeLeaseSellingProfitLoss": {
         "description": "Amount of profit (loss) recognized at commencement from sales-type lease."
     },
-    "SegmentReportingInformationIncomeLossBeforeIncomeTaxes": {
-        "description": "Amount of income or loss for the reportable segment before income taxes and extraordinary items."
-    },
-    "SegmentReportingInformationIntersegmentRevenue": {
-        "description": "Amount of revenue from transactions with other operating segments of the same entity. Such disclosure is presented if the amount is: (a) included in the measure of segment profit or loss reviewed by the chief operating decision maker or (b) otherwise regularly provided to the chief operating decision maker, even if not included in that measure of segment profit or loss."
-    },
-    "SegmentReportingInformationRevenue": {
-        "description": "Amount of total revenue for the reportable segments, including revenue from external customers, transactions with other operating segments of the same entity, and (gross) interest revenue. All considered to be \"operating revenue\" for purposes of the taxonomy."
-    },
-    "SegmentReportingInformationRevenueFromExternalCustomers": {
-        "description": "Amount of revenue from external customers for the reportable segment. Such disclosure is presented if the amount is: (a) included in the measure of segment profit or loss reviewed by the chief operating decision maker or (b) otherwise regularly provided to the chief operating decision maker, even if not included in that measure of segment profit or loss."
-    },
-    "SegmentReportingReconcilingItemsForOperatingProfitLoss": {
-        "description": "Total of reconciling items from segment operating profit or loss to consolidated income before income taxes, extraordinary items, and discontinued operations."
-    },
-    "SegmentReportingReconcilingItemsRevenue": {
-        "description": "Total of reconciling items between total reportable segments' revenues and consolidated entity revenues."
-    },
     "SellingGeneralAndAdministrativeExpense": {
         "description": "The aggregate total costs related to selling a firm's product and services, as well as all other general and administrative expenses. Direct selling expenses (for example, credit, warranty, and advertising) are expenses that can be directly linked to the sale of specific products. Indirect selling expenses are expenses that cannot be directly linked to the sale of specific products, for example telephone expenses, Internet, and postal charges. General and administrative expenses include salaries of non-sales personnel, rent, utilities, communication, etc."
     },
@@ -1901,14 +1568,8 @@
     "ShareBasedCompensationArrangementByShareBasedPaymentAwardOptionsExercisableWeightedAverageExercisePrice": {
         "description": "The weighted-average price as of the balance sheet date at which grantees can acquire the shares reserved for issuance on vested portions of options outstanding and currently exercisable under the stock option plan."
     },
-    "ShareBasedCompensationArrangementByShareBasedPaymentAwardOptionsExercisesInPeriod": {
-        "description": "The decrease in the number of reserved shares that could potentially be issued attributable to the exercise or conversion during the reporting period of previously issued stock options under the option plan."
-    },
     "ShareBasedCompensationArrangementByShareBasedPaymentAwardOptionsExercisesInPeriodTotalIntrinsicValue": {
         "description": "Amount of accumulated difference between fair value of underlying shares on dates of exercise and exercise price on options exercised (or share units converted) into shares."
-    },
-    "ShareBasedCompensationArrangementByShareBasedPaymentAwardOptionsExercisesInPeriodWeightedAverageExercisePrice": {
-        "description": "The weighted average price at which option holders acquired shares when converting their stock options into shares under the plan during the reporting period."
     },
     "ShareBasedCompensationArrangementByShareBasedPaymentAwardOptionsForfeituresAndExpirationsInPeriod": {
         "description": "For presentations that combine terminations, the number of shares under options that were cancelled during the reporting period as a result of occurrence of a terminating event specified in contractual agreements pertaining to the stock option plan or that expired."
@@ -1928,35 +1589,17 @@
     "ShareBasedCompensationArrangementByShareBasedPaymentAwardOptionsVestedAndExpectedToVestOutstandingAggregateIntrinsicValue": {
         "description": "Amount by which current fair value of underlying stock exceeds exercise price of fully vested and expected to vest options outstanding. Includes, but is not limited to, unvested options for which requisite service period has not been rendered but that are expected to vest based on achievement of performance condition, if forfeitures are recognized when they occur."
     },
-    "ShareBasedCompensationSharesAuthorizedUnderStockOptionPlansExercisePriceRangeExercisableOptionsWeightedAverageExercisePrice": {
-        "description": "Weighted average exercise price as of the balance sheet date for those equity-based payment arrangements exercisable and outstanding."
-    },
-    "ShareBasedCompensationSharesAuthorizedUnderStockOptionPlansExercisePriceRangeExercisableOptionsWeightedAverageRemainingContractualTerm": {
-        "description": "The weighted average remaining life of the outstanding, exercisable stock options as of the balance sheet date for all option plans in the customized range of exercise prices."
-    },
     "ShareBasedCompensationSharesAuthorizedUnderStockOptionPlansExercisePriceRangeNumberOfExercisableOptions": {
         "description": "The number of shares reserved for issuance pertaining to the outstanding exercisable stock options as of the balance sheet date in the customized range of exercise prices for which the market and performance vesting condition has been satisfied."
     },
     "ShareBasedCompensationSharesAuthorizedUnderStockOptionPlansExercisePriceRangeNumberOfOutstandingOptions": {
         "description": "The number of shares reserved for issuance pertaining to the outstanding stock options as of the balance sheet date for all option plans in the customized range of exercise prices."
     },
-    "ShareBasedCompensationSharesAuthorizedUnderStockOptionPlansExercisePriceRangeOutstandingOptionsWeightedAverageExercisePriceBeginningBalance": {
-        "description": "The weighted average price as of the balance sheet date at which grantees could acquire the underlying shares with respect to all outstanding stock options which are in the customized range of exercise prices."
-    },
-    "ShareBasedCompensationSharesAuthorizedUnderStockOptionPlansExercisePriceRangeOutstandingOptionsWeightedAverageRemainingContractualTerm": {
-        "description": "The weighted-average period remaining as of the balance sheet date until option expiration pertaining to the outstanding stock options for all option plans in the customized range of exercise prices, which may be expressed in a variety of ways (for example, years, months)."
-    },
     "SharebasedCompensationSharesAuthorizedUnderStockOptionPlansExercisePriceRangeExercisableOptionsWeightedAverageExercisePrice1": {
         "description": "Weighted average exercise price as of the balance sheet date for those equity-based payment arrangements exercisable and outstanding."
     },
-    "SharebasedCompensationSharesAuthorizedUnderStockOptionPlansExercisePriceRangeExercisableOptionsWeightedAverageRemainingContractualTerm1": {
-        "description": "The weighted average remaining life of the exercisable stock options as of the balance sheet date for all option plans in the customized range of exercise prices."
-    },
     "SharebasedCompensationSharesAuthorizedUnderStockOptionPlansExercisePriceRangeOutstandingOptionsWeightedAverageExercisePriceBeginningBalance1": {
         "description": "The weighted average price as of the balance sheet date at which grantees could acquire the underlying shares with respect to all outstanding stock options which are in the customized range of exercise prices."
-    },
-    "SharebasedCompensationSharesAuthorizedUnderStockOptionPlansExercisePriceRangeOutstandingOptionsWeightedAverageRemainingContractualTerm1": {
-        "description": "The weighted-average period remaining as of the balance sheet date until option expiration pertaining to the outstanding stock options for all option plans in the customized range of exercise prices, which may be expressed in a variety of ways (for example, years, months)."
     },
     "SharesPaidForTaxWithholdingForShareBasedCompensation": {
         "description": "Number of shares used to settle grantee's tax withholding obligation for award under share-based payment arrangement."
@@ -2137,5 +1780,17 @@
     },
     "TradeAndLoansReceivablesHeldForSaleNetNotPartOfDisposalGroup": {
         "description": "Amount, after valuation allowance, of accounts and financing receivables held for sale and not part of disposal group. Excludes loan covered under loss sharing agreement and loan classified as investment in debt security."
+    },
+    "DerivativeExcludedComponentGainLossRecognizedInEarnings": {
+        "description": "Amount of gain (loss) from excluded component of derivative hedge, recognized in earnings. Excludes recognition under systematic and rational method."
+    },
+    "DisposalGroupIncludingDiscontinuedOperationConsideration": {
+        "description": "Amount of consideration received or receivable for the disposal of assets and liabilities, including discontinued operation."
+    },
+    "OciBeforeReclassificationsBeforeTaxAttributableToParent": {
+        "description": "Amount before tax and reclassification adjustments of other comprehensive income (loss) attributable to parent."
+    },
+    "ReclassificationFromAociCurrentPeriodBeforeTaxAttributableToParent": {
+        "description": "Amount before tax of reclassification adjustments of other comprehensive income (loss) attributable to parent."
     }
 }
