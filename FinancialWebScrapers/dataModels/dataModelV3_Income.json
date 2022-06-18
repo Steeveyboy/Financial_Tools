@@ -1,0 +1,21 @@
+{
+    "IncomeStatements":{
+        "Total revenue": "Revenues",
+        "Total cost": "CostOfRevenue",
+        "Gross profit": "GrossProfit",
+
+        "Selling, general and administrative": "SellingGeneralAndAdministrativeExpense",
+        "Research, development and engineering": "ResearchAndDevelopmentExpense",
+        "Interest expense": "InterestExpense",
+        "Income before taxes": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+        "Net income": "NetIncomeLoss"},
+    
+    "BalanceSheet":{
+        "Total current assets": "AssetsCurrent",
+        "Total assets": "Assets",
+        "Total current liabilities": "LiabilitiesCurrent",
+        "Total liabilities": "Liabilities",
+        "Retained earnings": "RetainedEarningsAccumulatedDeficit",
+        "Total equity": "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+        "Total liabilities and equity": "LiabilitiesAndStockholdersEquity"}
+}
