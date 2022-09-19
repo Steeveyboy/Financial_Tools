@@ -1,32 +1,54 @@
 <html lang="en" data-theme="emerald">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css"> -->
     <link href="https://cdn.jsdelivr.net/npm/daisyui@2.24.0/dist/full.css" rel="stylesheet" type="text/css" />
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2/dist/tailwind.min.css" rel="stylesheet" type="text/css" /><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2/dist/tailwind.min.css" rel="stylesheet" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
+
 <body class="bg-neutral-content bg-base-200">
+
     <div class="hero bg-base-content h-1/4">
         <div class="hero-content text-center">
             <div class="">
                 <h1 class="text-5xl font-bold text-base-100">News Sentiment Generator</h1>
-                <p class="py-6 text-primary-focus text-base-100 text-lg">Begin by typing in any keyword to fetch relevant articles and run a sentiment analysis. 
+                <p class="py-6 text-primary-focus text-base-100 text-lg">Begin by typing in any keyword to fetch
+                    relevant articles and run a sentiment analysis.
                     </br> Try entering in a stock</p>
-                <form action="", action="get">
-                    <input type="text", name="keyword", placeholder="Type here" class="input input-bordered input-primary w-full max-w-xs"></input>
-                    <button class="btn btn-primary text-base-100", type="submit", formaction="searchKeyword">Get Started</button>
+                <form action="#" , method="POST">
+                    <input type="text" , name="keyword" , placeholder="Type here"
+                        class="input input-bordered input-primary w-full max-w-xs"></input>
+                    <button formaction="searchKeyword" , type="submit" , class="btn btn-primary text-base-100">Get
+                        Started</button>
                 </form>
             </div>
         </div>
     </div>
-    
+
 
     <div class="searchResults">
         {% for result in results %}
-            <li><p href="/{{ result.title }}">{{result.title}}</p></li>
+            <div class="indicator" style="margin:1rem;">
+                <span class="indicator-item badge badge-primary">new</span> 
+
+                <div class="card card-side bg-base-100 shadow-xl" , style="width: 50rem; height:12rem;">
+                    
+                    <figure style="width:10rem;"><img style="height:100%;" src="{{result.image}}" alt="Movie" /></figure>
+
+                    <div class="card-body" style="width:30rem; padding-top: 1rem;">
+
+                        <h2 class="card-title"><a href="{{result.url}}">{{result.title}}</a></h2>
+                        <div style=" white-space: break-spaces; overflow: overlay;"><p>{{result.description}}</p></div>
+                    </div>
+                </div>
+            </div>
+            <!-- <br> -->
         {% endfor %}
     </div>
 </body>
+
 </html>
