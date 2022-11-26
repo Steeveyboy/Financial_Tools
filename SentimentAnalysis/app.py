@@ -11,10 +11,11 @@ def landing():
 
 @app.route("/searchKeyword", methods=["POST"])
 def search_keyword():
-    keyword="hello"
+    # keyword="hello"
 
     if request.method == "POST":
         keyword = request.form["keyword"]
+        print(f"searching for keyword {keyword}")
     article_list = reuters.main(keyword)
     # lst = pd.read_csv("webscrapers/reuters_tesla.csv").to_dict(orient="records")
 

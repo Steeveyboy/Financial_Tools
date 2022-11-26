@@ -3,12 +3,15 @@ import pandas as pd
 import requests, asyncio
 
 source = "https://www.reuters.com"
-link = "https://www.reuters.com/pf/api/v3/content/fetch/articles-by-search-v2?query=%7B%22keyword%22%3A%22{keyword}%22%2C%22offset%22%3A0%2C%22orderby%22%3A%22display_date%3Adesc%22%2C%22size%22%3A{count}%2C%22website%22%3A%22reuters%22%7D&d=114&_website=reuters"
+
+link = "https://www.reuters.com/pf/api/v3/content/fetch/articles-by-search-v2?query=%7B%22keyword%22%3A%22{keyword}%22%2C%22offset%22%3A0%2C%22orderby%22%3A%22display_date%3Adesc%22%2C%22size%22%3A{count}%2C%22website%22%3A%22reuters%22%7D&&_website=reuters"
+
+# link = "https://www.reuters.com/pf/api/v3/content/fetch/articles-by-search-v2?query=%7B%22keyword%22%3A%22{keyword}%22%2C%22offset%22%3A0%2C%22orderby%22%3A%22display_date%3Adesc%22%2C%22size%22%3A{count}%2C%22website%22%3A%22reuters%22%7D&d=114&_website=reuters"
+
 #https://www.reuters.com/pf/api/v3/content/fetch/articles-by-search-v2?query=%7B%22keyword%22%3A%22tesla%22%2C%22offset%22%3A0%2C%22orderby%22%3A%22display_date%3Adesc%22%2C%22size%22%3A20%2C%22website%22%3A%22reuters%22%7D&d=108&_website=reuters
 
 #Link notes
-#   Figure out what d=xxx means
-#
+#   Figure out what d=xxx means. SOLVED? you can omit this and link still works
 
 
 def fetch_data(keyword):
@@ -59,4 +62,4 @@ def main(keyword, getarticles=False):
     return data.to_dict(orient="records")
 
 if __name__ == "__main__":
-    results = main("tesla")
+    results = main("tesla", getarticles=True)
