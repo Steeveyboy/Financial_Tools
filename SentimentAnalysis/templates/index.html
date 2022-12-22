@@ -12,7 +12,7 @@
 
 <body class="bg-neutral-content bg-base-200">
 
-    <div class="hero bg-base-content h-1/4">
+    <div class="hero bg-base-content">
         <div class="hero-content text-center">
             <div class="">
                 <h1 class="text-5xl font-bold text-base-100">News Sentiment Generator</h1>
@@ -29,11 +29,18 @@
         </div>
     </div>
 
+    
+    <div class="alert alert-success shadow-lg w-3/4 content-center" style="margin:auto">
+        <div style="width:80%">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <progress class="progress progress-accent w-full" value={{keyword_sentiment}} max="100"></progress>
+        </div>
+    </div>
 
     <div class="searchResults">
         {% for result in results %}
             <div class="indicator" style="margin:1rem;">
-                <span class="indicator-item badge badge-primary">new</span> 
+                <span class="indicator-item badge badge-primary">{{result.sentiment_score}}</span> 
 
                 <div class="card card-side bg-base-100 shadow-xl" , style="width: 50rem; height:12rem;">
                     

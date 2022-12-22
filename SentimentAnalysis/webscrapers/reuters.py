@@ -1,6 +1,8 @@
 from requests_html import AsyncHTMLSession
 import pandas as pd
 import requests, asyncio
+from sentiment import model_wraper
+sentiment_model = model_wraper.load_model()
 
 source = "https://www.reuters.com"
 
@@ -53,13 +55,15 @@ async def get_articles(urls):
 def main(keyword, getarticles=False):
     data = fetch_data(keyword)
     data["keyword"] = keyword
-    
+    data["sentiment_score"] = model_wraper.analyse_articles(sentiment_model, data)
     if getarticles:
         urls = list(data["url"])
         articles = asyncio.run(get_articles(urls))
         data["article"] = articles
     data.to_csv(f"reuters_{keyword}.csv", index=False)
     return data.to_dict(orient="records")
+
+    
 
 if __name__ == "__main__":
     results = main("tesla", getarticles=True)
