@@ -6,6 +6,7 @@
     <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css"> -->
     <link href="https://cdn.jsdelivr.net/npm/daisyui@2.24.0/dist/full.css" rel="stylesheet" type="text/css" />
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2/dist/tailwind.min.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
@@ -31,9 +32,11 @@
 
     
     <div class="alert alert-success shadow-lg w-3/4 content-center" style="margin:auto">
-        <div style="width:80%">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <progress class="progress progress-accent w-full" value={{keyword_sentiment}} max="100"></progress>
+        <div class="sentiment-bar">
+          <img src="https://cdn-icons-png.flaticon.com/512/2550/2550215.png" alt="" class="sentiment-icon">
+          <!-- <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> -->
+          <progress class="progress progress-accent w-full h-4" value={{keyword_sentiment}} max="100"></progress>
+          <img src="https://cdn-icons-png.flaticon.com/512/2550/2550214.png" alt="" class="sentiment-icon">
         </div>
     </div>
 

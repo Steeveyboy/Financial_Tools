@@ -47,7 +47,8 @@ def main(keyword, getarticles=False):
         # data["article"] = articles
 
     data.to_csv(f"cbc_{keyword}.csv", index=False)
-    return data.to_dict(orient="records")
+    return data
+    # return data.to_dict(orient="records")
 
 if __name__ == "__main__":
     results = main("tesla", getarticles=True)

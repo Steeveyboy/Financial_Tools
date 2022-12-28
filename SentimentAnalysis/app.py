@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request
 from sentiment.model_wraper import preprocess
-from webscrapers import reuters
+from webscrapers import webscraperControl
 import pandas as pd
 from functools import reduce
 
@@ -17,7 +17,7 @@ def search_keyword():
     if request.method == "POST":
         keyword = request.form["keyword"]
         print(f"searching for keyword {keyword}")
-    article_list = reuters.main(keyword)
+    article_list = webscraperControl.main(keyword)
 
     # lst = pd.read_csv("webscrapers/reuters_tesla.csv").to_dict(orient="records")
     keyword_sentiment = (sum([i["sentiment_score"] for i in article_list]) / len(article_list)) * 100
@@ -28,6 +28,7 @@ def search_keyword():
 
 # def get_color(score):
 #     if()
+
 
 if __name__ == "__main__":
     app.run(host="localhost", port=5151, debug=True)

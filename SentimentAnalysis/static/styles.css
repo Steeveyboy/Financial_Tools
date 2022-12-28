@@ -1,0 +1,10 @@
+
+.sentiment-icon {
+    max-width: 2rem;
+}
+
+.sentiment-bar{
+    width:80%;
+    align-self: center;
+    margin:auto;
+}
