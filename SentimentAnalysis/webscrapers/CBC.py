@@ -1,6 +1,6 @@
 from requests_html import HTMLSession
 import pandas as pd
-import requests, asyncio
+import requests, asyncio, logging
 link = "https://www.cbc.ca/search_api/v1/search?q={keyword}&sortOrder=relevance&section=news&media=all&boost-cbc-keywords=7&boost-cbc-keywordscollections=7&boost-cbc-keywordslocation=4&boost-cbc-keywordsorganization=3&boost-cbc-keywordsperson=5&boost-cbc-keywordssubject=7&boost-cbc-publishedtime=30&page=1&fields=feed"
 # link = "https://www.cbc.ca/search_api/v1/search?q=tesla&sortOrder=relevance&media=all&boost-cbc-keywords=7&boost-cbc-keywordscollections=7&boost-cbc-keywordslocation=4&boost-cbc-keywordsorganization=3&boost-cbc-keywordsperson=5&boost-cbc-keywordssubject=7&boost-cbc-publishedtime=30&page=1&fields=feed"
 
@@ -46,7 +46,7 @@ def main(keyword, getarticles=False):
         # articles = asyncio.run(get_articles(urls))
         # data["article"] = articles
 
-    data.to_csv(f"cbc_{keyword}.csv", index=False)
+    # data.to_csv(f"cbc_{keyword}.csv", index=False)
     return data
     # return data.to_dict(orient="records")
 
