@@ -12,17 +12,18 @@ def landing():
 
 @app.route("/searchKeyword", methods=["POST"])
 def search_keyword():
-    # keyword="hello"
 
     if request.method == "POST":
         keyword = request.form["keyword"]
         print(f"searching for keyword {keyword}")
-    article_list = webscraperControl.main(keyword)
 
-    # lst = pd.read_csv("webscrapers/reuters_tesla.csv").to_dict(orient="records")
+    if keyword == "":
+        return landing()
+
+    article_list = webscraperControl.main(keyword)
     keyword_sentiment = (sum([i["sentiment_score"] for i in article_list]) / len(article_list)) * 100
-    # color = get_color(keyword_sentiment)
-    # print(article_list)
+
+
     return render_template("index.html", results=article_list, keyword_sentiment=keyword_sentiment)
     # return render_template("index.html", results=article_list)
 

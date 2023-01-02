@@ -17,4 +17,4 @@ def agg_articles(keyword):
 def main(keyword):
     data = agg_articles(keyword)
     data["sentiment_score"] = model_wraper.analyse_articles(sentiment_model, data)
-    return data.sample(fraq=1).to_dict(orient="records")
+    return data.sample(frac=1).to_dict(orient="records")
