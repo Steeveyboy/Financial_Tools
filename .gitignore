@@ -1,3 +1,13 @@
 .pyc
 *.pyc
+__pycache__/
+*.log
+
+# Ignore Jupyter Notebook checkpoints
 .ipynb_checkpoints/
+
+# Ignore virtual environment directories
+.venv/
+venv/
+
+
