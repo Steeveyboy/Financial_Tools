@@ -1,13 +1,23 @@
-.pyc
 *.pyc
 __pycache__/
 *.log
 
-# Ignore Jupyter Notebook checkpoints
+# Jupyter Notebook checkpoints
 .ipynb_checkpoints/
 
-# Ignore virtual environment directories
+# Virtual environment directories
 .venv/
 venv/
+env/
 
+# OS-generated files
+.DS_Store
+Thumbs.db
+~$*
 
+# IDE files
+.vscode/
+.idea/
+
+# Excel lock files
+~$*.xlsx
