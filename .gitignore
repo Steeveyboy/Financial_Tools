@@ -21,3 +21,6 @@ Thumbs.db
 
 # Excel lock files
 ~$*.xlsx
+
+# Environment variable files
+.env
