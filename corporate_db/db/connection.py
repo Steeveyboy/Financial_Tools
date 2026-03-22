@@ -1,25 +1,14 @@
-"""
-Database connection utilities for corporate_db.
+"""Database connection utilities for ``corporate_db``.
 
 Provides three public helpers:
 
-* :func:`get_engine` — returns a (cached) SQLAlchemy :class:`~sqlalchemy.engine.Engine`.
-* :func:`get_session` — context manager that yields a :class:`~sqlalchemy.orm.Session`
-  with automatic commit/rollback handling.
-* :func:`init_db` — creates all tables defined in ``Base.metadata`` (dev / testing).
+* :func:`get_engine` — returns a cached SQLAlchemy engine.
+* :func:`get_session` — yields a session with automatic commit/rollback.
+* :func:`init_db` — creates tables and seeds default exchanges.
 
 The database URL and echo flag are read from :mod:`corporate_db.config`.
-If you need a different URL at runtime, set the ``DATABASE_URL`` environment
-variable **before** importing this module (or before calling :func:`get_engine`
-for the first time).
-
-Usage example::
-
-    from corporate_db.db.connection import get_session
-    from corporate_db.models.company import Company
-
-    with get_session() as session:
-        companies = session.query(Company).filter_by(is_active=True).all()
+If you need a different URL at runtime, set ``DATABASE_URL`` before importing
+this module or before calling :func:`get_engine` for the first time.
 """
 
 from __future__ import annotations
@@ -30,6 +19,7 @@ from typing import Generator
 
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import Engine
+from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import Session, sessionmaker
 
 from corporate_db.config import DATABASE_URL, ECHO_SQL
@@ -43,6 +33,14 @@ _engine: Engine | None = None
 _SessionFactory: sessionmaker | None = None
 
 
+def _safe_url(url: str) -> str:
+    """Return a log-safe representation of *url* with the password masked."""
+    try:
+        return make_url(url).render_as_string(hide_password=True)
+    except Exception:
+        return "<unparseable URL>"
+
+
 def get_engine() -> Engine:
     """Return a cached :class:`~sqlalchemy.engine.Engine`.
 
@@ -52,28 +50,38 @@ def get_engine() -> Engine:
     web frameworks).
     """
     global _engine
-    if _engine is None:
-        connect_args: dict = {}
-        if DATABASE_URL.startswith("sqlite"):
-            connect_args["check_same_thread"] = False
+    if _engine is not None:
+        logger.debug("Returning cached engine (%s).", _safe_url(DATABASE_URL))
+        return _engine
 
-        _engine = create_engine(
-            DATABASE_URL,
-            echo=ECHO_SQL,
-            connect_args=connect_args,
-        )
+    logger.info("Creating new SQLAlchemy engine — %s", _safe_url(DATABASE_URL))
 
-        # Enable WAL mode on SQLite for better concurrency
-        if DATABASE_URL.startswith("sqlite"):
-            @event.listens_for(_engine, "connect")
-            def _set_sqlite_pragma(dbapi_connection, _connection_record):
-                cursor = dbapi_connection.cursor()
-                cursor.execute("PRAGMA journal_mode=WAL")
-                cursor.execute("PRAGMA foreign_keys=ON")
-                cursor.close()
+    connect_args: dict = {}
+    if DATABASE_URL.startswith("sqlite"):
+        connect_args["check_same_thread"] = False
+        logger.debug("SQLite detected — disabling check_same_thread.")
 
-        logger.debug("Created engine for %s", DATABASE_URL)
+    _engine = create_engine(
+        DATABASE_URL,
+        echo=ECHO_SQL,
+        connect_args=connect_args,
+    )
 
+    # Enable WAL mode on SQLite for better concurrency
+    if DATABASE_URL.startswith("sqlite"):
+        @event.listens_for(_engine, "connect")
+        def _set_sqlite_pragma(dbapi_connection, _connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
+            logger.debug("SQLite PRAGMAs set: journal_mode=WAL, foreign_keys=ON.")
+
+    logger.info(
+        "Engine created — dialect: %s, echo: %s.",
+        _engine.dialect.name,
+        ECHO_SQL,
+    )
     return _engine
 
 
@@ -81,12 +89,14 @@ def _get_session_factory() -> sessionmaker:
     """Return a cached :class:`~sqlalchemy.orm.sessionmaker` bound to the engine."""
     global _SessionFactory
     if _SessionFactory is None:
+        logger.debug("Creating session factory.")
         _SessionFactory = sessionmaker(
             bind=get_engine(),
             autocommit=False,
             autoflush=False,
             expire_on_commit=False,
         )
+        logger.debug("Session factory created.")
     return _SessionFactory
 
 
@@ -106,14 +116,23 @@ def get_session() -> Generator[Session, None, None]:
     """
     factory = _get_session_factory()
     session: Session = factory()
+    logger.debug("Session opened (id=%s).", id(session))
     try:
         yield session
         session.commit()
-    except Exception:
+        logger.debug("Session committed (id=%s).", id(session))
+    except Exception as exc:
+        logger.warning(
+            "Session rollback triggered by %s: %s (id=%s).",
+            type(exc).__name__,
+            exc,
+            id(session),
+        )
         session.rollback()
         raise
     finally:
         session.close()
+        logger.debug("Session closed (id=%s).", id(session))
 
 
 def init_db() -> None:
@@ -129,9 +148,18 @@ def init_db() -> None:
     # registered on Base.metadata before create_all() is called.
     from corporate_db.models import Base  # noqa: PLC0415
 
+    logger.info("Initialising database schema — %s", _safe_url(DATABASE_URL))
     engine = get_engine()
+
+    table_names = list(Base.metadata.tables.keys())
+    logger.debug("Tables registered on Base.metadata: %s", table_names)
+
     Base.metadata.create_all(engine)
-    logger.info("Database tables created (or already exist).")
+    logger.info(
+        "Schema sync complete — %d table(s) ensured: %s.",
+        len(table_names),
+        table_names,
+    )
 
     _seed_exchanges(engine)
 
@@ -140,8 +168,10 @@ def _seed_exchanges(engine: Engine) -> None:
     """Insert default exchange records if the table is empty."""
     from corporate_db.models.exchange import Exchange  # noqa: PLC0415
 
+    logger.debug("Checking whether exchanges table needs seeding.")
     with get_session() as session:
-        if session.query(Exchange).count() == 0:
+        count = session.query(Exchange).count()
+        if count == 0:
             defaults = [
                 Exchange(
                     code="NYSE",
@@ -174,9 +204,16 @@ def _seed_exchanges(engine: Engine) -> None:
             ]
             session.add_all(defaults)
             logger.info("Seeded %d default exchanges.", len(defaults))
+        else:
+            logger.debug("Exchanges table already has %d row(s) — skipping seed.", count)
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Initialise the database when invoked as a script or module."""
     logging.basicConfig(level=logging.INFO)
     init_db()
     print(f"Database initialised at: {DATABASE_URL}")
+
+
+if __name__ == "__main__":
+    main()

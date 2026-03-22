@@ -73,6 +73,9 @@ ECHO_SQL=0   # set to 1 for verbose SQL logging
 Initialize the database (creates tables + seeds default exchanges):
 
 ```bash
+python -m corporate_db
+
+# or
 python -m corporate_db.db.connection
 ```
 
