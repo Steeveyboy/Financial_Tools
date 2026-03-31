@@ -1,0 +1,31 @@
+database:
+  name: financial_datawarehouse
+  schema: public
+  tables:
+    companies: companies
+    company_officers: company_officers
+
+fetcher:
+  sources:
+    nyse: "https://raw.githubusercontent.com/rreichel3/US-Stock-Symbols/main/nyse/nyse_full_tickers.json"
+    nasdaq: "https://raw.githubusercontent.com/rreichel3/US-Stock-Symbols/refs/heads/main/nasdaq/nasdaq_full_tickers.json"
+  min_market_cap: 10_000_000
+  accepted_countries:
+    - United States
+    - Canada
+    - United Kingdom
+    - Germany
+    - France
+    - Italy
+    - Spain
+    - Netherlands
+    - Switzerland
+    - Australia
+    - Japan
+    - Kazakhstan
+    - Ireland
+    - Sweden
+    - Denmark
+    - Norway
+    - Finland
+  rate_limit_delay: 0.2
