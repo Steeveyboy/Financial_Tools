@@ -1,0 +1,29 @@
+# Core dependencies (required now)
+python-dotenv~=1.0
+sqlalchemy~=2.0
+psycopg2-binary~=2.9   # only needed for PostgreSQL
+
+# RSS extraction (needed when RSSExtractor is implemented)
+# feedparser~=6.0
+# beautifulsoup4~=4.14   # for stripping HTML from article content
+# lxml~=6.0              # HTML parser backend for BeautifulSoup
+
+# Sentiment analysis — choose one approach (see transformers/sentiment.py)
+# Option A: reuse existing model (already available in SentimentAnalysis/)
+# joblib~=1.5
+# scikit-learn~=1.6
+#
+# Option B: FinBERT (recommended for financial news)
+# torch~=2.0
+# transformers~=4.40
+#
+# Option C: Claude API
+# anthropic~=0.30
+
+# Entity extraction — choose one approach (see transformers/entity.py)
+# Option A: dictionary lookup (no extra deps)
+#
+# Option B: spaCy NER
+# spacy~=3.7
+#
+# Option C: Claude API (same as sentiment Option C above)
