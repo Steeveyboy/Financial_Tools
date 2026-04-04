@@ -1,8 +1,11 @@
 beautifulsoup4~=4.14.2
-jupyterlab~=8.6.3
+jupyterlab~=4.5
 numpy~=2.3.5
 pandas~=2.3.3
 pandas-datareader~=0.10.0
+psycopg2-binary~=2.9
+python-dotenv~=1.0
+sqlalchemy~=2.0
 streamlit~=1.55.0
 tqdm~=4.67.1
 yfinance~=1.0
