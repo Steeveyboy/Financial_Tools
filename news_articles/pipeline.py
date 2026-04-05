@@ -70,6 +70,11 @@ class ExtractionPipeline:
         """
         Execute all extractors and persist the results.
 
+        If an article dict contains a `mentioned_tickers` key (as provided
+        by FNSPIDExtractor, which has Stock_symbol already), the tickers are
+        linked to the article at load time — no EntityTransformer run needed
+        for those records.
+
         Returns:
             Total number of new articles inserted across all extractors.
         """
@@ -83,6 +88,7 @@ class ExtractionPipeline:
                 articles = extractor._tag_source(articles)
                 inserted = self.repo.insert_articles(articles)
                 total_inserted += inserted
+                self._link_known_tickers(articles)
             except Exception as exc:
                 _logger.error(
                     "Extractor '%s' failed: %s", extractor.source_id, exc
@@ -90,6 +96,27 @@ class ExtractionPipeline:
 
         _logger.info("Extraction complete — %d new articles inserted", total_inserted)
         return total_inserted
+
+    def _link_known_tickers(self, articles: list[dict]) -> None:
+        """
+        Link tickers to articles when the extractor already knows them.
+
+        Some sources (e.g. FNSPID) provide a ticker symbol directly alongside
+        each article. When `mentioned_tickers` is present in an article dict,
+        we populate article_tickers at load time rather than waiting for the
+        EntityTransformer to run later.
+        """
+        for article in articles:
+            tickers = article.get("mentioned_tickers")
+            if not tickers:
+                continue
+
+            # Look up the article's database ID by URL.
+            article_id = self.repo.get_id_by_url(article["url"])
+            if article_id is None:
+                continue  # article was a duplicate and not inserted
+
+            self.repo.link_tickers(article_id, tickers)
 
 
 class TransformationPipeline:

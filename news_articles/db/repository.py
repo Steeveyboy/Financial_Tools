@@ -166,6 +166,13 @@ class ArticleRepository:
     # Internal helpers
     # ------------------------------------------------------------------
 
+    def get_id_by_url(self, url: str) -> int | None:
+        """Return the database ID of an article by its URL, or None if not found."""
+        stmt = select(articles.c.id).where(articles.c.url == url)
+        with self.engine.connect() as conn:
+            row = conn.execute(stmt).fetchone()
+            return row[0] if row else None
+
     def _existing_urls(self, urls: set[str]) -> set[str]:
         """Return the subset of `urls` that already exist in the database."""
         stmt = select(articles.c.url).where(articles.c.url.in_(urls))

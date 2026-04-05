@@ -1,15 +1,18 @@
-# Core dependencies (required now)
+# Core dependencies (required)
 python-dotenv~=1.0
 sqlalchemy~=2.0
-psycopg2-binary~=2.9   # only needed for PostgreSQL
+psycopg2-binary~=2.9     # only needed for PostgreSQL
 
-# RSS extraction (needed when RSSExtractor is implemented)
-# feedparser~=6.0
-# beautifulsoup4~=4.14   # for stripping HTML from article content
-# lxml~=6.0              # HTML parser backend for BeautifulSoup
+# RSS extraction
+feedparser~=6.0
+beautifulsoup4~=4.14
+lxml~=6.0                # HTML parser backend for BeautifulSoup
 
-# Sentiment analysis — choose one approach (see transformers/sentiment.py)
-# Option A: reuse existing model (already available in SentimentAnalysis/)
+# HuggingFace dataset (FNSPID)
+datasets~=2.20
+
+# Sentiment analysis — uncomment one approach (see transformers/sentiment.py)
+# Option A: reuse existing model from SentimentAnalysis/
 # joblib~=1.5
 # scikit-learn~=1.6
 #
@@ -20,10 +23,8 @@ psycopg2-binary~=2.9   # only needed for PostgreSQL
 # Option C: Claude API
 # anthropic~=0.30
 
-# Entity extraction — choose one approach (see transformers/entity.py)
-# Option A: dictionary lookup (no extra deps)
+# Entity extraction — uncomment one approach (see transformers/entity.py)
+# Option A: dictionary lookup — no extra deps
 #
 # Option B: spaCy NER
 # spacy~=3.7
-#
-# Option C: Claude API (same as sentiment Option C above)
