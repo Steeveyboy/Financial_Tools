@@ -127,24 +127,22 @@ class FNSPIDExtractor(ArticleExtractor):
         kept = 0
         skipped = 0
 
-        progress = tqdm(
-            dataset,
-            desc="FNSPID",
-            unit=" rows",
-            bar_format="{desc}: {n_fmt} scanned | {rate_fmt} | kept {postfix[kept]} | skipped {postfix[skipped]}",
-            postfix={"kept": 0, "skipped": 0},
-        )
+        # progress = tqdm(
+        #     dataset,
+        #     desc="FNSPID",
+        #     unit=" rows",
+        #     bar_format="{desc}: {n_fmt} scanned | {rate_fmt} | kept {postfix[kept]} | skipped {postfix[skipped]}",
+        #     postfix={"kept": 0, "skipped": 0},
+        # )
 
-        for row in progress:
+        for row in dataset:
             article = self._normalise(row)
             if article is None or not self._passes_filters(article):
                 skipped += 1
-                progress.postfix["skipped"] = skipped
                 continue
 
             batch.append(article)
             kept += 1
-            progress.postfix["kept"] = kept
 
             if len(batch) >= self.batch_size:
                 yield batch
@@ -153,7 +151,6 @@ class FNSPIDExtractor(ArticleExtractor):
         if batch:
             yield batch
 
-        progress.close()
         _logger.info("FNSPID complete: %d kept, %d skipped", kept, skipped)
 
     def _normalise(self, row: dict) -> dict | None:

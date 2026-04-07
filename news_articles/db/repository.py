@@ -69,9 +69,16 @@ class ArticleRepository:
         if not rows:
             return 0
 
-        new_urls = {r["url"] for r in rows}
-        existing = self._existing_urls(new_urls)
-        to_insert = [r for r in rows if r["url"] not in existing]
+        existing = self._existing_urls({r["url"] for r in rows})
+
+        # Deduplicate within the batch itself — FNSPID has the same URL
+        # under multiple tickers, producing duplicate rows in one batch.
+        seen: set[str] = set()
+        to_insert = []
+        for r in rows:
+            if r["url"] not in existing and r["url"] not in seen:
+                seen.add(r["url"])
+                to_insert.append(r)
 
         if not to_insert:
             _logger.info("All %d articles already present — nothing to insert", len(rows))
