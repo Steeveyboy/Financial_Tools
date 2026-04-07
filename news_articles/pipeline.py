@@ -11,11 +11,6 @@ Phase 2 — Transformation (run separately, can be re-run at any time):
     TransformationPipeline loads unprocessed articles from the database
     and applies each registered transformer in order.
 
-Keeping these two phases separate means:
-    - New transforms can be applied to the full historical dataset
-    - Extraction can run frequently without triggering expensive transforms
-    - Each transform can be re-run independently if it is improved
-
 Usage:
     from sqlalchemy import create_engine
     from news_articles.pipeline import ExtractionPipeline, TransformationPipeline
@@ -43,7 +38,6 @@ from __future__ import annotations
 
 import logging
 
-from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
 from .db.repository import ArticleRepository
@@ -56,6 +50,10 @@ _logger = logging.getLogger(__name__)
 class ExtractionPipeline:
     """
     Runs all extractors and loads their articles into the database.
+
+    Extractors that implement extract_batches() are consumed incrementally
+    so rows appear in the database as they stream — no need to wait for
+    the full dataset to finish before seeing results.
 
     Args:
         engine:     SQLAlchemy engine connected to the target database.
@@ -70,11 +68,6 @@ class ExtractionPipeline:
         """
         Execute all extractors and persist the results.
 
-        If an article dict contains a `mentioned_tickers` key (as provided
-        by FNSPIDExtractor, which has Stock_symbol already), the tickers are
-        linked to the article at load time — no EntityTransformer run needed
-        for those records.
-
         Returns:
             Total number of new articles inserted across all extractors.
         """
@@ -83,19 +76,22 @@ class ExtractionPipeline:
 
         for extractor in self.extractors:
             _logger.info("Running extractor: %s", extractor.source_id)
-            try:
-                articles = extractor.extract()
-                articles = extractor._tag_source(articles)
-                inserted = self.repo.insert_articles(articles)
-                total_inserted += inserted
-                self._link_known_tickers(articles)
-            except Exception as exc:
-                _logger.error(
-                    "Extractor '%s' failed: %s", extractor.source_id, exc
-                )
+            inserted = self._run_extractor(extractor)
+            total_inserted += inserted
 
         _logger.info("Extraction complete — %d new articles inserted", total_inserted)
         return total_inserted
+
+    def _run_extractor(self, extractor: ArticleExtractor) -> int:
+        """Run a single extractor, consuming batches incrementally."""
+        inserted = 0
+
+        for batch in extractor.extract_batches():
+            batch = extractor._tag_source(batch)
+            inserted += self.repo.insert_articles(batch)
+            self._link_known_tickers(batch)
+
+        return inserted
 
     def _link_known_tickers(self, articles: list[dict]) -> None:
         """
@@ -111,7 +107,6 @@ class ExtractionPipeline:
             if not tickers:
                 continue
 
-            # Look up the article's database ID by URL.
             article_id = self.repo.get_id_by_url(article["url"])
             if article_id is None:
                 continue  # article was a duplicate and not inserted
@@ -176,11 +171,6 @@ class TransformationPipeline:
 
         TODO: As transformers are implemented, add a branch here for each
               transform_id to persist its specific output fields.
-              Example for sentiment:
-                  UPDATE articles SET sentiment_score = :score WHERE id = :id
-
-              Example for entity extraction:
-                  repo.link_tickers(article["id"], article["mentioned_tickers"])
         """
         if transformer.transform_id == "entity_extraction":
             for article in articles:

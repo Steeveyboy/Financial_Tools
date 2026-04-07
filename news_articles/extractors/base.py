@@ -17,6 +17,7 @@ Example:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 
 
 class ArticleExtractor(ABC):
@@ -29,11 +30,19 @@ class ArticleExtractor(ABC):
 
     Subclasses must set `source_id` (a short string identifying the source,
     stored in the articles.source column) and implement `extract()`.
+
+    Extractors may implement `extract_batches()` instead of (or in addition
+    to) `extract()` to yield articles in chunks. This avoids holding the
+    entire dataset in memory. The pipeline will prefer `extract_batches()`
+    when available.
     """
 
     #: Short identifier stored in the articles.source column, e.g. "rss", "newsapi".
     #: Must be unique across all extractors.
     source_id: str = ""
+
+    #: Default batch size for extractors that support batched extraction.
+    batch_size: int = 500
 
     @abstractmethod
     def extract(self) -> list[dict]:
@@ -57,6 +66,15 @@ class ArticleExtractor(ABC):
             List of article dicts ready to pass to ArticleRepository.insert_articles().
         """
         ...
+
+    def extract_batches(self) -> Iterator[list[dict]]:
+        """
+        Yield articles in batches rather than accumulating all at once.
+
+        Default implementation calls extract() and yields a single batch.
+        Override this for sources that stream large datasets.
+        """
+        yield self.extract()
 
     def _tag_source(self, articles: list[dict]) -> list[dict]:
         """Stamp each article dict with this extractor's source_id."""

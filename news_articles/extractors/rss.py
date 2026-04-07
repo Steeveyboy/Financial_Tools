@@ -34,7 +34,13 @@ _logger = logging.getLogger(__name__)
 
 # Reuters Business News RSS feed. Additional feeds can be appended to this
 # list or passed directly to RSSExtractor when constructing it.
-REUTERS_BUSINESS_FEED = "https://feeds.reuters.com/reuters/businessNews"
+YAHOO_NEW_FEED = "https://finance.yahoo.com/news/rss"
+GOOGLE_NEWS_REUTERS = "https://news.google.com/rss/search?q=site:reuters.com+when:1d&hl=en-US&gl=US&ceid=US:en"
+
+RSS_FEEDS = [
+    YAHOO_NEW_FEED,
+    GOOGLE_NEWS_REUTERS,
+]
 
 
 def _strip_html(raw: str | None) -> str | None:
@@ -46,18 +52,32 @@ def _strip_html(raw: str | None) -> str | None:
 
 def _parse_date(date_str: str | None) -> datetime | None:
     """
-    Parse an RFC 2822 date string (standard in RSS) to a UTC datetime.
+    Parse an RSS date string to a naive UTC datetime.
 
-    Returns None if the string is missing or unparseable.
+    Tries RFC 2822 first (Google News, most RSS feeds), then falls back
+    to ISO 8601 (Yahoo Finance).
     """
     if not date_str:
         return None
+
+    # RFC 2822: "Mon, 06 Apr 2026 04:57:00 GMT"
     try:
         dt = parsedate_to_datetime(date_str)
         return dt.astimezone(timezone.utc).replace(tzinfo=None)
     except Exception:
-        _logger.debug("Could not parse date string: %r", date_str)
-        return None
+        pass
+
+    # ISO 8601: "2026-04-06T04:57:00Z" or "2026-04-06T04:57:00+00:00"
+    try:
+        dt = datetime.fromisoformat(date_str)
+        if dt.tzinfo is not None:
+            dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+        return dt
+    except Exception:
+        pass
+
+    _logger.warning("Could not parse date string: %r", date_str)
+    return None
 
 
 class RSSExtractor(ArticleExtractor):
@@ -74,7 +94,7 @@ class RSSExtractor(ArticleExtractor):
     source_id = "rss"
 
     def __init__(self, feed_urls: list[str] | None = None):
-        self.feed_urls = feed_urls or [REUTERS_BUSINESS_FEED]
+        self.feed_urls = feed_urls or RSS_FEEDS
 
     def extract(self) -> list[dict]:
         """
