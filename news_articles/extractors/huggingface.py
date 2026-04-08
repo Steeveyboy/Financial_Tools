@@ -34,7 +34,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterator
-from datetime import datetime
+from datetime import datetime, timezone
 
 from tqdm import tqdm
 
@@ -45,8 +45,8 @@ _logger = logging.getLogger(__name__)
 DATASET_NAME = "Zihan1004/FNSPID"
 
 _DATE_FORMATS = [
-    "%Y-%m-%d %H:%M:%S%z",
     "%Y-%m-%d %H:%M:%S",
+    "%Y-%m-%d %H:%M:%S%z",
     "%Y-%m-%dT%H:%M:%S%z",   # ISO 8601 with T separator
     "%Y-%m-%dT%H:%M:%S",
     "%Y-%m-%d",
@@ -60,7 +60,7 @@ def _parse_date(date_str: str | None) -> datetime | None:
     for fmt in _DATE_FORMATS:
         try:
             dt = datetime.strptime(date_str.strip(), fmt)
-            return dt.replace(tzinfo=None)
+            return dt.replace(tzinfo=timezone.utc)
         except ValueError:
             continue
     _logger.debug("Could not parse FNSPID date: %r", date_str)
@@ -162,14 +162,16 @@ class FNSPIDExtractor(ArticleExtractor):
             return None
 
         ticker = row.get("Stock_symbol")
-
+        
+        published_date =  row.get("Date", "").replace(" UTC", "")
+        
         return {
             "url":               url,
             "title":             row.get("Article_title"),
-            "author":            None,
+            "author":            row.get("Author"),
             "publisher":         row.get("Publisher"),
             "content":           None,
-            "published_at":      _parse_date(row.get("Date")),
+            "published_at":      _parse_date(published_date),
             "mentioned_tickers": [ticker] if ticker else [],
         }
 
