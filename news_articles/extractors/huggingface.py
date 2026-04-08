@@ -47,6 +47,8 @@ DATASET_NAME = "Zihan1004/FNSPID"
 _DATE_FORMATS = [
     "%Y-%m-%d %H:%M:%S%z",
     "%Y-%m-%d %H:%M:%S",
+    "%Y-%m-%dT%H:%M:%S%z",   # ISO 8601 with T separator
+    "%Y-%m-%dT%H:%M:%S",
     "%Y-%m-%d",
 ]
 

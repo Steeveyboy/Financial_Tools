@@ -32,6 +32,10 @@ from .schema import article_tickers, articles, metadata
 
 _logger = logging.getLogger(__name__)
 
+# Valid column names for the articles table — used to strip extra keys
+# (e.g. 'mentioned_tickers') before issuing INSERT statements.
+_ARTICLE_COLUMNS: frozenset[str] = frozenset(c.name for c in articles.c)
+
 
 class ArticleRepository:
     """Read/write access to the articles store."""
@@ -84,8 +88,16 @@ class ArticleRepository:
             _logger.info("All %d articles already present — nothing to insert", len(rows))
             return 0
 
+        # Strip keys that aren't table columns (e.g. 'mentioned_tickers').
+        # SQLAlchemy 2.0 derives INSERT column names from the first dict's
+        # keys, so unknown keys cause a CompileError.
+        clean_rows = [
+            {k: v for k, v in r.items() if k in _ARTICLE_COLUMNS}
+            for r in to_insert
+        ]
+
         with self.engine.begin() as conn:
-            conn.execute(articles.insert(), to_insert)
+            conn.execute(articles.insert(), clean_rows)
 
         skipped = len(rows) - len(to_insert)
         _logger.info(
@@ -113,6 +125,22 @@ class ArticleRepository:
         with self.engine.begin() as conn:
             conn.execute(article_tickers.insert(), rows)
         _logger.debug("Linked %d tickers to article %d", len(tickers), article_id)
+
+    def bulk_link_tickers(self, links: list[dict]) -> None:
+        """
+        Insert multiple (article_id, ticker) pairs in a single operation.
+
+        More efficient than calling link_tickers() per article when
+        processing a batch of articles with known tickers.
+
+        Args:
+            links: List of dicts with keys 'article_id' and 'ticker'.
+        """
+        if not links:
+            return
+        with self.engine.begin() as conn:
+            conn.execute(article_tickers.insert(), links)
+        _logger.debug("Bulk linked %d ticker associations", len(links))
 
     # ------------------------------------------------------------------
     # Reads
@@ -172,6 +200,24 @@ class ArticleRepository:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+
+    def get_ids_by_urls(self, urls: list[str]) -> dict[str, int]:
+        """
+        Return a {url: article_id} mapping for the given URLs in one query.
+
+        Used by the pipeline to batch-resolve IDs after inserting a batch,
+        avoiding per-article SELECT queries.
+
+        Args:
+            urls: List of article URLs to look up.
+
+        Returns:
+            Dict mapping each found URL to its articles.id value.
+        """
+        stmt = select(articles.c.id, articles.c.url).where(articles.c.url.in_(urls))
+        with self.engine.connect() as conn:
+            result = conn.execute(stmt)
+            return {row.url: row.id for row in result}
 
     def get_id_by_url(self, url: str) -> int | None:
         """Return the database ID of an article by its URL, or None if not found."""

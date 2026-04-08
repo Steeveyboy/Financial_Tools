@@ -97,21 +97,28 @@ class ExtractionPipeline:
         """
         Link tickers to articles when the extractor already knows them.
 
-        Some sources (e.g. FNSPID) provide a ticker symbol directly alongside
-        each article. When `mentioned_tickers` is present in an article dict,
-        we populate article_tickers at load time rather than waiting for the
-        EntityTransformer to run later.
+        Batches all ID lookups and inserts into two queries per batch
+        rather than 2×N individual queries, which is critical for the
+        FNSPID dataset with millions of rows.
         """
-        for article in articles:
-            tickers = article.get("mentioned_tickers")
-            if not tickers:
-                continue
+        articles_with_tickers = [a for a in articles if a.get("mentioned_tickers")]
+        if not articles_with_tickers:
+            return
 
-            article_id = self.repo.get_id_by_url(article["url"])
+        # Fetch all article IDs for this batch in a single query.
+        urls = [a["url"] for a in articles_with_tickers]
+        url_to_id = self.repo.get_ids_by_urls(urls)
+
+        # Build all ticker link rows and insert in one operation.
+        links = []
+        for article in articles_with_tickers:
+            article_id = url_to_id.get(article["url"])
             if article_id is None:
-                continue  # article was a duplicate and not inserted
+                continue  # duplicate URL, not inserted
+            for ticker in article["mentioned_tickers"]:
+                links.append({"article_id": article_id, "ticker": ticker})
 
-            self.repo.link_tickers(article_id, tickers)
+        self.repo.bulk_link_tickers(links)
 
 
 class TransformationPipeline:
