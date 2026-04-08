@@ -67,7 +67,12 @@ articles = Table(
 article_tickers = Table(
     "article_tickers",
     metadata,
-    Column("article_id", Integer, ForeignKey("articles.id"), nullable=False),
+    Column(
+        "article_id",
+        Integer,
+        ForeignKey("articles.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
     Column("ticker",     String(10),                         nullable=False),
 )
 
