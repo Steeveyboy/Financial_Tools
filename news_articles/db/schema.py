@@ -52,7 +52,7 @@ articles = Table(
     Column("publisher",    String(255), nullable=True),
     Column("source",       String(64),  nullable=True),   # extractor identifier
     Column("content",      Text,     nullable=True),
-    Column("published_at", DateTime, nullable=True),
+    Column("published_at", DateTime, nullable=False),
     Column(
         "fetched_at",
         DateTime,
