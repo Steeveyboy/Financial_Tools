@@ -1,0 +1,33 @@
+# Core dependencies (required)
+python-dotenv~=1.0
+sqlalchemy~=2.0
+psycopg2-binary~=2.9     # only needed for PostgreSQL
+
+# Progress bar
+tqdm~=4.66
+
+# RSS extraction
+feedparser~=6.0
+beautifulsoup4~=4.14
+lxml~=6.0                # HTML parser backend for BeautifulSoup
+
+# HuggingFace dataset (FNSPID)
+datasets~=2.20
+
+# Sentiment analysis — uncomment one approach (see transformers/sentiment.py)
+# Option A: reuse existing model from SentimentAnalysis/
+# joblib~=1.5
+# scikit-learn~=1.6
+#
+# Option B: FinBERT (recommended for financial news)
+# torch~=2.0
+# transformers~=4.40
+#
+# Option C: Claude API
+# anthropic~=0.30
+
+# Entity extraction — uncomment one approach (see transformers/entity.py)
+# Option A: dictionary lookup — no extra deps
+#
+# Option B: spaCy NER
+# spacy~=3.7
