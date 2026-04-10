@@ -12,6 +12,11 @@ on:
           - 'true'
           - 'false'
 
+permissions:
+  contents: read
+  issues: write
+  projects: write
+
 jobs:
   run-pm-agent:
     runs-on: ubuntu-latest

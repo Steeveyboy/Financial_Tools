@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import logging
 import os
-import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -176,6 +175,4 @@ class CodebaseScanner:
                         )
 
 
-def _compile_pattern(pattern: str) -> re.Pattern:
-    """Compile a stub pattern into a case-insensitive regex."""
-    return re.compile(re.escape(pattern), re.IGNORECASE)
+
