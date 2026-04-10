@@ -1,0 +1,193 @@
+"""
+pipeline.py
+
+Orchestrates the two-phase ETL pipeline for news articles.
+
+Phase 1 — Extraction (run on a schedule, e.g. every hour):
+    ExtractionPipeline fetches articles from all registered extractors
+    and loads them into the database. No transforms are applied here.
+
+Phase 2 — Transformation (run separately, can be re-run at any time):
+    TransformationPipeline loads unprocessed articles from the database
+    and applies each registered transformer in order.
+
+Usage:
+    from sqlalchemy import create_engine
+    from news_articles.pipeline import ExtractionPipeline, TransformationPipeline
+    from news_articles.extractors.rss import RSSExtractor
+    from news_articles.transformers.sentiment import SentimentTransformer
+    from news_articles.transformers.entity import EntityTransformer
+
+    engine = create_engine(db_url)
+
+    # --- Phase 1: extract and load ---
+    extraction = ExtractionPipeline(engine, extractors=[
+        RSSExtractor(feed_urls=["https://..."]),
+    ])
+    extraction.run()
+
+    # --- Phase 2: transform (run separately) ---
+    transformation = TransformationPipeline(engine, transformers=[
+        SentimentTransformer(),
+        EntityTransformer(),
+    ])
+    transformation.run()
+"""
+
+from __future__ import annotations
+
+import logging
+
+from sqlalchemy.engine import Engine
+
+from .db.repository import ArticleRepository
+from .extractors.base import ArticleExtractor
+from .transformers.base import ArticleTransformer
+
+_logger = logging.getLogger(__name__)
+
+
+class ExtractionPipeline:
+    """
+    Runs all extractors and loads their articles into the database.
+
+    Extractors that implement extract_batches() are consumed incrementally
+    so rows appear in the database as they stream — no need to wait for
+    the full dataset to finish before seeing results.
+
+    Args:
+        engine:     SQLAlchemy engine connected to the target database.
+        extractors: List of ArticleExtractor instances to run.
+    """
+
+    def __init__(self, engine: Engine, extractors: list[ArticleExtractor]):
+        self.repo = ArticleRepository(engine)
+        self.extractors = extractors
+
+    def run(self) -> int:
+        """
+        Execute all extractors and persist the results.
+
+        Returns:
+            Total number of new articles inserted across all extractors.
+        """
+        self.repo.create_tables()
+        total_inserted = 0
+
+        for extractor in self.extractors:
+            _logger.info("Running extractor: %s", extractor.source_id)
+            inserted = self._run_extractor(extractor)
+            total_inserted += inserted
+
+        _logger.info("Extraction complete — %d new articles inserted", total_inserted)
+        return total_inserted
+
+    def _run_extractor(self, extractor: ArticleExtractor) -> int:
+        """Run a single extractor, consuming batches incrementally."""
+        inserted = 0
+
+        for batch in extractor.extract_batches():
+            batch = extractor._tag_source(batch)
+            inserted += self.repo.insert_articles(batch)
+            self._link_known_tickers(batch)
+
+        return inserted
+
+    def _link_known_tickers(self, articles: list[dict]) -> None:
+        """
+        Link tickers to articles when the extractor already knows them.
+
+        Batches all ID lookups and inserts into two queries per batch
+        rather than 2×N individual queries, which is critical for the
+        FNSPID dataset with millions of rows.
+        """
+        articles_with_tickers = [a for a in articles if a.get("mentioned_tickers")]
+        if not articles_with_tickers:
+            return
+
+        # Fetch all article IDs for this batch in a single query.
+        urls = [a["url"] for a in articles_with_tickers]
+        url_to_id = self.repo.get_ids_by_urls(urls)
+
+        # Build all ticker link rows and insert in one operation.
+        links = []
+        for article in articles_with_tickers:
+            article_id = url_to_id.get(article["url"])
+            if article_id is None:
+                continue  # duplicate URL, not inserted
+            for ticker in article["mentioned_tickers"]:
+                links.append({"article_id": article_id, "ticker": ticker})
+
+        self.repo.bulk_link_tickers(links)
+
+
+class TransformationPipeline:
+    """
+    Applies a sequence of transformers to articles already in the database.
+
+    Transformers are applied in the order they are registered. Each transformer
+    receives the output of the previous one, allowing them to build on each
+    other (e.g. entity extraction can use sentiment scores if needed).
+
+    Args:
+        engine:       SQLAlchemy engine connected to the target database.
+        transformers: Ordered list of ArticleTransformer instances to apply.
+    """
+
+    def __init__(self, engine: Engine, transformers: list[ArticleTransformer]):
+        self.repo = ArticleRepository(engine)
+        self.transformers = transformers
+
+    def run(self, transform_name: str | None = None) -> None:
+        """
+        Apply all (or one) transformer(s) to unprocessed articles.
+
+        Args:
+            transform_name: If provided, only run the transformer with this
+                            transform_id. Useful for re-running a single step.
+        """
+        targets = self.transformers
+        if transform_name:
+            targets = [t for t in self.transformers if t.transform_id == transform_name]
+            if not targets:
+                _logger.error("No transformer found with id '%s'", transform_name)
+                return
+
+        for transformer in targets:
+            _logger.info("Running transformer: %s", transformer.transform_id)
+            try:
+                articles = self.repo.get_untransformed(transformer.transform_id)
+                if not articles:
+                    _logger.info("No articles to transform for '%s'", transformer.transform_id)
+                    continue
+
+                enriched = transformer.transform(articles)
+                self._persist(transformer, enriched)
+
+            except Exception as exc:
+                _logger.error(
+                    "Transformer '%s' failed: %s", transformer.transform_id, exc
+                )
+
+    def _persist(self, transformer: ArticleTransformer, articles: list[dict]) -> None:
+        """
+        Write transformer results back to the database.
+
+        Each transformer produces different output fields, so persistence
+        logic is handled per transform_id.
+
+        TODO: As transformers are implemented, add a branch here for each
+              transform_id to persist its specific output fields.
+        """
+        if transformer.transform_id == "entity_extraction":
+            for article in articles:
+                tickers = article.get("mentioned_tickers", [])
+                if tickers:
+                    self.repo.link_tickers(article["id"], tickers)
+
+        # TODO: add persistence for sentiment_score and future transforms
+        _logger.debug(
+            "Persisted results for transformer '%s' (%d articles)",
+            transformer.transform_id,
+            len(articles),
+        )
