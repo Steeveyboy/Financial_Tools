@@ -14,7 +14,6 @@ This is a multi-project Python repository of independent financial tools ("Reson
 | `SP500_Analysis/` | Jupyter notebooks | Pandas, yfinance, Matplotlib |
 | `descriptions/` | Jupyter notebooks | Pandas, yfinance |
 | `market_data/` | Stock price fetcher | yfinance, SQLAlchemy |
-| `pm_agent/` | Project manager agent | PyGithub, PyYAML |
 
 ## Architecture
 
@@ -105,7 +104,7 @@ These are the open implementation tasks. Check GitHub Issues for the latest stat
 - Use SQLite in-memory (`sqlite://`) for database tests
 - Mock external APIs (RSS feeds, HuggingFace) — don't hit real endpoints in tests
 - Run tests: `python -m pytest tests/ -v`
-- Run linter: `flake8 news_articles/ pm_agent/`
+- Run linter: `flake8 news_articles/`
 
 ## How to Run the Pipeline Locally
 
@@ -135,7 +134,7 @@ pipeline.run()
 |---|---|---|
 | `DB_URL` | `news_articles`, `market_data` | SQLAlchemy URL; required |
 | `NEWS_LOG_LEVEL` | `news_articles` | Default: `INFO` |
-| `GITHUB_TOKEN` | `pm_agent` | GitHub PAT for issue/project management |
+
 
 Place these in a `.env` file at the project root — `news_articles/config.py` calls `load_dotenv()` automatically.
 

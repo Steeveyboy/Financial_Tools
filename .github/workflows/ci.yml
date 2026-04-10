@@ -29,14 +29,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8 pytest
           pip install -r news_articles/requirements.txt
-          pip install -r pm_agent/requirements.txt
 
       - name: Lint with flake8
         run: |
           # Stop on syntax errors or undefined names
-          flake8 news_articles/ pm_agent/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 news_articles/ --count --select=E9,F63,F7,F82 --show-source --statistics
           # Warnings as non-blocking
-          flake8 news_articles/ pm_agent/ --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
+          flake8 news_articles/ --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
 
       - name: Run tests
         env:

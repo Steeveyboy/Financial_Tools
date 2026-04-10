@@ -25,9 +25,6 @@ You are a testing agent working on the **Resonance Desk** financial tools reposi
   │   └── transformers/
   │       ├── test_sentiment.py
   │       └── test_entity.py
-  └── pm_agent/
-      ├── test_scanner.py
-      └── test_wbs.py
   ```
 
 ## Database Tests

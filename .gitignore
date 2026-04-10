@@ -23,6 +23,3 @@ Thumbs.db
 ~$*.xlsx
 
 .env
-
-# Generated files
-pm_agent/wbs.json
