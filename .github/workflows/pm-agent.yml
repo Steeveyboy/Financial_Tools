@@ -1,0 +1,47 @@
+name: PM Agent — Generate WBS and Issues
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (preview only, no GitHub changes)'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  run-pm-agent:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r pm_agent/requirements.txt
+
+      - name: Run PM Agent
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            python -m pm_agent --dry-run --verbose
+          else
+            python -m pm_agent --verbose
+          fi
+
+      - name: Upload WBS manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: wbs-manifest
+          path: pm_agent/wbs.json
+          retention-days: 30
