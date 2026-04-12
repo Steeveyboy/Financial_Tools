@@ -39,6 +39,6 @@ jobs:
 
       - name: Run tests
         env:
-          DB_URL: "sqlite://"
+          DATABASE_URL: "sqlite://"
         run: |
           python -m pytest tests/ -v --tb=short || echo "No tests found yet"

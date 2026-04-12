@@ -5,16 +5,16 @@ Fetches daily OHLCV (Open, High, Low, Close, Volume) stock market data
 from Yahoo Finance and inserts it into a database via SQLAlchemy.
 
 Configuration (environment variables):
-    DB_URL     - SQLAlchemy connection string (required)
-                 Examples:
-                   postgresql://user:pass@localhost:5432/market_data
-                   sqlite:///market_data.db
-                   mysql+pymysql://user:pass@localhost/market_data
-    START_DATE - Default start date (YYYY-MM-DD), fallback: 2015-01-01
-    END_DATE   - Default end date   (YYYY-MM-DD), fallback: today
+    DATABASE_URL - SQLAlchemy connection string (required)
+                   Examples:
+                     postgresql://user:pass@localhost:5432/market_data
+                     sqlite:///market_data.db
+                     mysql+pymysql://user:pass@localhost/market_data
+    START_DATE   - Default start date (YYYY-MM-DD), fallback: 2015-01-01
+    END_DATE     - Default end date   (YYYY-MM-DD), fallback: today
 
 Usage:
-    export DB_URL="postgresql://user:pass@localhost:5432/market_data"
+    export DATABASE_URL="postgresql://user:pass@localhost:5432/market_data"
     python fetch_stock_data.py AAPL MSFT GOOG
     python fetch_stock_data.py AAPL --start 2024-01-01
     python fetch_stock_data.py tickers.json --mode truncate
@@ -116,7 +116,7 @@ class StockDatabase:
     Manages database connectivity and storage of OHLCV data via SQLAlchemy.
 
     Because SQLAlchemy supports many backends, the only change required to
-    switch databases is the DB_URL connection string:
+    switch databases is the DATABASE_URL connection string:
         PostgreSQL : postgresql://user:pass@host:5432/dbname
         SQLite     : sqlite:///path/to/file.db
         MySQL      : mysql+pymysql://user:pass@host/dbname
@@ -143,7 +143,7 @@ class StockDatabase:
         """
         Step 2a: Create the target database if it does not already exist.
 
-        Parses the DB_URL to extract the database name, then connects to the
+        Parses the DATABASE_URL to extract the database name, then connects to the
         server's default 'postgres' database to check for (and optionally
         create) the target. This step is only relevant for PostgreSQL; for
         SQLite the file is created automatically, and for other backends the
@@ -323,15 +323,15 @@ def main():
     # Step 0: Resolve configuration from environment variables and CLI.
     #
     # CLI flags --start and --end override their respective env vars.
-    # DB_URL is read exclusively from the environment to keep credentials
-    # out of shell history.
+    # DATABASE_URL is read exclusively from the environment to keep
+    # credentials out of shell history.
     # ----------------------------------------------------------------
-    db_url = _env("DB_URL")
+    db_url = _env("DATABASE_URL")
     if not db_url:
         _logger.error(
-            "DB_URL environment variable is not set.\n"
+            "DATABASE_URL environment variable is not set.\n"
             "Set it before running:\n"
-            '  export DB_URL="sqlite:///market_data.db"'
+            '  export DATABASE_URL="sqlite:///market_data.db"'
         )
         raise SystemExit(1)
 

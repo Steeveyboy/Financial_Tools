@@ -8,7 +8,7 @@ Sources:
   - FNSPID HuggingFace dataset (historical, filtered by ticker + date range)
 
 Configuration (via .env or environment):
-  DB_URL          - SQLAlchemy connection string (required)
+  DATABASE_URL    - SQLAlchemy connection string (required)
   NEWS_LOG_LEVEL  - Logging verbosity (default: INFO)
 
 Usage:
