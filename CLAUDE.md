@@ -35,7 +35,7 @@ Phase 2 — Transform:   articles table → Transformer(s) → sentiment_score c
 **Setup:**
 ```bash
 pip install -r news_articles/requirements.txt
-export DB_URL="sqlite:///resonance.db"   # or postgresql://...
+export DATABASE_URL="sqlite:///resonance.db"   # or postgresql://...
 ```
 
 Run the pipeline from the project root (`Financial_Tools/`), not from inside `news_articles/`.
@@ -71,7 +71,7 @@ python app.py
 
 | Variable | Used by | Notes |
 |---|---|---|
-| `DB_URL` | `news_articles` | SQLAlchemy URL; required |
+| `DATABASE_URL` | `news_articles`, `market_data`, `corporate_db` | SQLAlchemy URL; required |
 | `NEWS_LOG_LEVEL` | `news_articles` | Default: `INFO` |
 
-Place these in a `.env` file at the project root — `news_articles/config.py` calls `load_dotenv()` automatically.
+Place these in a `.env` file at the project root — all modules call `load_dotenv()` automatically.

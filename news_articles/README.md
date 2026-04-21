@@ -30,7 +30,7 @@ Keeping extraction and transformation separate means:
 
 ```
 news_articles/
-  config.py               # DB_URL and environment variable loading
+  config.py               # DATABASE_URL and environment variable loading
   pipeline.py             # ExtractionPipeline, TransformationPipeline
   db/
     schema.py             # SQLAlchemy table definitions (articles, article_tickers)
@@ -82,9 +82,9 @@ pip install -r news_articles/requirements.txt
 **2. Set the database URL**
 
 ```bash
-export DB_URL="postgresql://user:pass@localhost:5432/resonance"
+export DATABASE_URL="postgresql://user:pass@localhost:5432/resonance"
 # or for local development:
-export DB_URL="sqlite:///resonance.db"
+export DATABASE_URL="sqlite:///resonance.db"
 ```
 
 Add this to a `.env` file in the project root to avoid setting it every session.

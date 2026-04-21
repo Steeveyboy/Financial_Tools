@@ -111,7 +111,7 @@ These are the open implementation tasks. Check GitHub Issues for the latest stat
 ```bash
 # From the project root (Financial_Tools/), NOT from inside news_articles/
 pip install -r news_articles/requirements.txt
-export DB_URL="sqlite:///resonance.db"
+export DATABASE_URL="sqlite:///resonance.db"
 
 # Run extraction
 python load_news_articles.py
@@ -132,7 +132,7 @@ pipeline.run()
 
 | Variable | Used by | Notes |
 |---|---|---|
-| `DB_URL` | `news_articles`, `market_data` | SQLAlchemy URL; required |
+| `DATABASE_URL` | `news_articles`, `market_data`, `corporate_db` | SQLAlchemy URL; required |
 | `NEWS_LOG_LEVEL` | `news_articles` | Default: `INFO` |
 
 
