@@ -1,0 +1,78 @@
+name: PM Agent — Triage Stubs and Create Issues
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run: preview issues that would be created without touching GitHub'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 09:00 UTC
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  pm-agent:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run PM Agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run || 'true' }}
+        run: |
+          claude --allowedTools "Bash,Read,Glob,Grep" --max-turns 40 -p "
+          You are a project manager agent for the Resonance Desk financial tools repository.
+
+          ## Your task
+
+          1. **Scan** the codebase for unimplemented stubs. Look in news_articles/ for:
+             - Methods containing only a TODO comment or a warning log followed by a stub return
+             - Grep for: TODO, FIXME, NotImplemented, stub
+             Focus on actionable gaps (missing implementations), not cosmetic notes.
+
+          2. **Check existing issues** to avoid duplicates:
+             gh issue list --label 'agent:coding' --state open --json number,title
+             gh issue list --label 'agent:testing' --state open --json number,title
+
+          3. **For each untracked stub**, decide on the correct label (agent:coding for implementations,
+             agent:testing for missing test coverage) and create a GitHub issue.
+
+             Use this exact gh command structure:
+             gh issue create \
+               --title '<concise title>' \
+               --label 'agent:coding,status:ready' \
+               --body '<body>'
+
+             Format the body following .github/ISSUE_TEMPLATE/coding_task.md:
+             - Summary section
+             - Affected Module (exact file path)
+             - Recommended approach (1-2 sentences)
+             - Acceptance Criteria (checkboxes)
+             - Agent Instructions section with: files to edit, interface contract, tests to write
+
+          4. **DRY_RUN mode**: if DRY_RUN is 'true', print what you would create but do NOT
+             call gh issue create. If DRY_RUN is 'false', create the issues.
+
+          DRY_RUN is currently: $DRY_RUN
+
+          Be concise — one issue per distinct stub. Do not create duplicate issues.
+          "
