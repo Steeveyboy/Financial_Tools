@@ -4,17 +4,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a multi-project Python repository of independent financial tools ("Resonance Desk" data warehouse). Each subdirectory is a self-contained project — there is no shared virtual environment or top-level package. The active development focus is `news_articles/`.
+This is a Python repository being consolidated into a single Postgres-backed financial data warehouse ("Resonance Desk"). The end goal is one package (`findata/`) with one ORM `Base`, one Alembic history, and one set of ingestion sources. See [docs/CLEANUP_PLAN.md](docs/CLEANUP_PLAN.md) for the target structure and phased rollout.
+
+Today the repo is mid-migration: several independent modules each write to the same `DATABASE_URL` but with different ORM idioms. The active development focus is `news_articles/`.
 
 ## Projects
 
-| Directory | Type | Key Tech |
-|-----------|------|----------|
-| `news_articles/` | ETL pipeline (active) | SQLAlchemy, feedparser, HuggingFace datasets |
-| `SentimentAnalysis/` | Flask web app | Flask, NLTK, scikit-learn, requests-html |
-| `FinancialWebScrapers/` | Scripts + Jupyter notebooks | Requests, Pydantic, pymongo, Pandas |
-| `SP500_Analysis/` | Jupyter notebooks | Pandas, yfinance, Matplotlib |
-| `descriptions/` | Jupyter notebooks | Pandas, yfinance |
+| Directory | Role | Storage | Key Tech |
+|-----------|------|---------|----------|
+| `news_articles/` | News ETL pipeline (active) | Postgres / SQLite (`articles`, `article_tickers`) | SQLAlchemy Core, feedparser, HuggingFace datasets |
+| `corporate_db/` | Company / exchange profiles | Postgres / SQLite (`exchanges`, `companies`, `insiders`) | SQLAlchemy 2.0 ORM + Alembic |
+| `market_data/` | Daily OHLCV loader | Postgres / SQLite (`daily_ohlcv`) | yfinance, raw SQL + pandas |
+| `descriptions/` | yfinance profile loader for `corporate_db` | (writes to corporate_db) | Pandas, yfinance |
+| `FinancialWebScrapers/` | SEC EDGAR / XBRL scrapers | MongoDB (`finance_database.company-facts`) | Requests, Pydantic, pymongo |
+| `SentimentAnalysis/` | Legacy Flask demo app | none (in-memory) | Flask, NLTK, scikit-learn |
+| `notebooks/` | Exploratory Jupyter notebooks | — | Pandas, yfinance, Matplotlib |
+
+Entry points at the repo root: `load_news_articles.py` (news ETL), `Makefile` (common targets).
 
 ## news_articles — ETL Architecture
 
@@ -73,5 +79,7 @@ python app.py
 |---|---|---|
 | `DATABASE_URL` | `news_articles`, `market_data`, `corporate_db` | SQLAlchemy URL; required |
 | `NEWS_LOG_LEVEL` | `news_articles` | Default: `INFO` |
+| `ECHO_SQL` | `corporate_db` | Truthy → log all SQL; default off |
+| `START_DATE`, `END_DATE` | `market_data` | Optional `YYYY-MM-DD` defaults for OHLCV fetch |
 
-Place these in a `.env` file at the project root — all modules call `load_dotenv()` automatically.
+Place these in a `.env` file at the project root — all modules call `load_dotenv()` automatically. See `.env.example` for the full set.
