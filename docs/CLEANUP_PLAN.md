@@ -5,7 +5,7 @@ Status: **in progress** — Phase 0 and Phase 1 done. Decisions captured below.
 Progress:
 - ✅ Phase 0 — hygiene: notebooks consolidated under `notebooks/`, docs refreshed, `.env.example` added, merged branches pruned.
 - ✅ Phase 1 — `findata/` package created: `corporate_db/` moved in (`findata/db/{base,session}.py`, `findata/models/`, `findata/config.py`), single Alembic tree at `findata/db/migrations/` with `alembic.ini` at the repo root, `corporate_db/` removed, all importers updated (`descriptions/populate_db.py`, `Makefile`).
-- ⬜ Phase 2 — port news tables to ORM.
+- ✅ Phase 2 (partial) — news tables ported to ORM: `findata/models/article.py` + `article_ticker.py`, migration `0002_news_tables.py`, `news_articles/db/schema.py` deleted, `news_articles/db/repository.py` now sources its Table objects from `findata.models`. **Deferred to a follow-up:** (a) rewriting `ArticleRepository` to use ORM sessions instead of Core statements, (b) relocating `news_articles/` under `findata/sources/news/` — kept in place for now since it's the active module and to keep this diff focused. `article_tickers` gained a composite PK `(article_id, ticker)` (the old Core table had no PK).
 - ⬜ Phases 3–7 — see below.
 
 ## Goal

@@ -17,6 +17,10 @@ Usage:
 
     repo.insert_articles(articles)
     repo.link_tickers(article_id=1, tickers=["AAPL", "MSFT"])
+
+The `articles` / `article_tickers` tables are defined as ORM models in
+``findata.models``; this repository uses Core-style statements against the
+underlying Table objects.
 """
 
 from __future__ import annotations
@@ -25,10 +29,14 @@ import logging
 from datetime import datetime
 
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.engine import Engine
 
-from .schema import article_tickers, articles, metadata
+from findata.models import Base
+from findata.models.article import Article
+from findata.models.article_ticker import ArticleTicker
+
+articles = Article.__table__
+article_tickers = ArticleTicker.__table__
 
 _logger = logging.getLogger(__name__)
 
@@ -48,8 +56,11 @@ class ArticleRepository:
     # ------------------------------------------------------------------
 
     def create_tables(self) -> None:
-        """Create all tables if they do not already exist."""
-        metadata.create_all(self.engine)
+        """Create the news tables if they do not already exist (dev convenience).
+
+        In production use ``alembic upgrade head`` instead.
+        """
+        Base.metadata.create_all(self.engine, tables=[articles, article_tickers])
         _logger.debug("Database tables are ready")
 
     # ------------------------------------------------------------------

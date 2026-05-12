@@ -9,5 +9,7 @@ from findata.db.base import Base
 from .exchange import Exchange
 from .company import Company
 from .insider import Insider
+from .article import Article
+from .article_ticker import ArticleTicker
 
-__all__ = ["Base", "Exchange", "Company", "Insider"]
+__all__ = ["Base", "Exchange", "Company", "Insider", "Article", "ArticleTicker"]

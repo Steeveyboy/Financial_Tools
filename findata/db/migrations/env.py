@@ -37,7 +37,13 @@ logger = logging.getLogger("alembic.env")
 # The import order matters: base must be imported before the models that
 # reference it, and the models __init__ handles that correctly.
 from findata.models import Base  # noqa: E402
-from findata.models import Exchange, Company, Insider  # noqa: E402, F401
+from findata.models import (  # noqa: E402, F401
+    Exchange,
+    Company,
+    Insider,
+    Article,
+    ArticleTicker,
+)
 
 target_metadata = Base.metadata
 

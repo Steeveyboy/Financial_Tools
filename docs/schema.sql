@@ -1,14 +1,18 @@
 -- =============================================================================
--- findata corporate tables — PostgreSQL DDL reference
+-- findata warehouse schema — PostgreSQL DDL reference
 -- =============================================================================
--- This file documents the intended schema in plain SQL (PostgreSQL dialect).
--- It is for reference / manual use only.  All schema changes should be
--- managed through Alembic migrations.
+-- Documents the intended schema in plain SQL (PostgreSQL dialect). For
+-- reference / manual use only — all schema changes go through Alembic
+-- migrations (findata/db/migrations/, run `alembic upgrade head`).
 --
--- Generate from models:
+-- Covers: exchanges, companies, insiders (corporate) and articles,
+-- article_tickers (news). market-data and SEC tables to follow.
+--
+-- Regenerate from models:
 --   python -c "
 --   from sqlalchemy.schema import CreateTable
---   from findata.models import Base, Exchange, Company, Insider
+--   import findata.models  # registers every model on Base.metadata
+--   from findata.models import Base
 --   from sqlalchemy.dialects import postgresql
 --   for t in Base.metadata.sorted_tables:
 --       print(CreateTable(t).compile(dialect=postgresql.dialect()))
@@ -121,6 +125,41 @@ COMMENT ON COLUMN insiders.is_board_member   IS 'True if the person sits on the 
 COMMENT ON COLUMN insiders.is_insider        IS 'True if the person is a reporting insider';
 COMMENT ON COLUMN insiders.start_date        IS 'Date the role began (nullable)';
 COMMENT ON COLUMN insiders.end_date          IS 'Date the role ended; NULL means current';
+
+-- ---------------------------------------------------------------------------
+-- articles  (news ETL — news_articles/)
+-- ---------------------------------------------------------------------------
+CREATE TABLE articles (
+    id           SERIAL PRIMARY KEY,
+    url          TEXT         NOT NULL UNIQUE,
+    title        TEXT,
+    author       TEXT,
+    publisher    VARCHAR(255),
+    source       VARCHAR(64),
+    content      TEXT,
+    published_at TIMESTAMP    NOT NULL,
+    fetched_at   TIMESTAMP    NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX ix_articles_published_at ON articles (published_at);
+
+COMMENT ON TABLE  articles              IS 'One row per ingested news article, deduplicated by URL';
+COMMENT ON COLUMN articles.url          IS 'Canonical article URL — unique, the dedup key';
+COMMENT ON COLUMN articles.source       IS 'Extractor identifier, e.g. rss, fnspid';
+COMMENT ON COLUMN articles.fetched_at   IS 'Insert timestamp, set by the DB';
+
+-- ---------------------------------------------------------------------------
+-- article_tickers  (M:N articles ↔ tickers)
+-- ---------------------------------------------------------------------------
+CREATE TABLE article_tickers (
+    article_id INTEGER     NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+    ticker     VARCHAR(10) NOT NULL,
+    PRIMARY KEY (article_id, ticker)
+);
+
+CREATE INDEX ix_article_tickers_ticker_article ON article_tickers (ticker, article_id);
+
+COMMENT ON TABLE article_tickers IS 'Links articles to the ticker symbols they mention';
 
 -- =============================================================================
 -- SQLite note

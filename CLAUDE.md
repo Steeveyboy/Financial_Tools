@@ -32,6 +32,7 @@ Phase 2 — Transform:   articles table → Transformer(s) → sentiment_score c
 ```
 
 **Key design points:**
+- The `articles` / `article_tickers` tables are ORM models in `findata.models` (`Article`, `ArticleTicker`). `news_articles/db/repository.py` uses Core-style statements against `Article.__table__` / `ArticleTicker.__table__`; there is no longer a `news_articles/db/schema.py`.
 - `ArticleExtractor` subclasses define `source_id` and `extract() -> list[dict]`. URL is the deduplication key.
 - If an extractor dict includes `mentioned_tickers`, the pipeline links them at load time (no EntityTransformer needed).
 - `ArticleRepository` is the sole SQL layer — never write raw SQL outside it.
@@ -54,7 +55,7 @@ The target home for the whole warehouse (see `docs/CLEANUP_PLAN.md`). Structure:
 - `findata/db/migrations/` — the single Alembic tree; `alembic.ini` is at the repo root. `env.py` reads `DATABASE_URL` and imports `findata.models` for autogenerate.
 - `findata/config.py` — `DATABASE_URL` / `ECHO_SQL`, loads `<repo_root>/.env`.
 
-`python -m findata` runs `init_db()` (dev convenience); `alembic upgrade head` is the production path. Currently only the corporate tables (`exchanges`, `companies`, `insiders`) live here; news / market / SEC tables migrate in per the cleanup plan. `companies` has dialect-conditional full-text search (Postgres GIN / SQLite FTS5) — see `models/company.py`.
+`python -m findata` runs `init_db()` (dev convenience); `alembic upgrade head` is the production path. Currently holds the corporate tables (`exchanges`, `companies`, `insiders`) and the news tables (`articles`, `article_tickers`); market / SEC tables migrate in per the cleanup plan. `companies` has dialect-conditional full-text search (Postgres GIN / SQLite FTS5) — see `models/company.py`.
 
 ## SentimentAnalysis
 
