@@ -33,7 +33,7 @@ market-data:
 # ── Corporate DB ─────────────────────────────────────────────────────────────
 
 corporate-db:
-	python -m corporate_db
+	python -m findata
 
 # ── SentimentAnalysis ────────────────────────────────────────────────────────
 

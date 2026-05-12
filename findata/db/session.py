@@ -1,4 +1,4 @@
-"""Database connection utilities for ``corporate_db``.
+"""Database connection utilities for ``findata``.
 
 Provides three public helpers:
 
@@ -6,7 +6,7 @@ Provides three public helpers:
 * :func:`get_session` — yields a session with automatic commit/rollback.
 * :func:`init_db` — creates tables and seeds default exchanges.
 
-The database URL and echo flag are read from :mod:`corporate_db.config`.
+The database URL and echo flag are read from :mod:`findata.config`.
 If you need a different URL at runtime, set ``DATABASE_URL`` before importing
 this module or before calling :func:`get_engine` for the first time.
 """
@@ -22,7 +22,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import Session, sessionmaker
 
-from corporate_db.config import DATABASE_URL, ECHO_SQL
+from findata.config import DATABASE_URL, ECHO_SQL
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ def get_engine() -> Engine:
     """Return a cached :class:`~sqlalchemy.engine.Engine`.
 
     The engine is created once per process using the URL and echo settings
-    from :mod:`corporate_db.config`.  For SQLite connections, ``check_same_thread``
+    from :mod:`findata.config`.  For SQLite connections, ``check_same_thread``
     is disabled so the engine can be safely used across threads (common in
     web frameworks).
     """
@@ -146,7 +146,7 @@ def init_db() -> None:
     """
     # Import Base through the models package so that all model classes are
     # registered on Base.metadata before create_all() is called.
-    from corporate_db.models import Base  # noqa: PLC0415
+    from findata.models import Base  # noqa: PLC0415
 
     logger.info("Initialising database schema — %s", _safe_url(DATABASE_URL))
     engine = get_engine()
@@ -166,7 +166,7 @@ def init_db() -> None:
 
 def _seed_exchanges(engine: Engine) -> None:
     """Insert default exchange records if the table is empty."""
-    from corporate_db.models.exchange import Exchange  # noqa: PLC0415
+    from findata.models.exchange import Exchange  # noqa: PLC0415
 
     logger.debug("Checking whether exchanges table needs seeding.")
     with get_session() as session:

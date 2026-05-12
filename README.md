@@ -14,9 +14,9 @@ The repository is mid-consolidation. See [`docs/CLEANUP_PLAN.md`](docs/CLEANUP_P
 | Module | Role | Storage | Notes |
 |---|---|---|---|
 | [`news_articles/`](news_articles/) | News ETL pipeline — RSS + FNSPID extractors, sentiment transformer | Postgres / SQLite | Tables: `articles`, `article_tickers` |
-| [`corporate_db/`](corporate_db/) | Company / exchange profiles | Postgres / SQLite | Tables: `exchanges`, `companies`, `insiders`. SQLAlchemy 2.0 ORM + Alembic |
+| [`findata/`](findata/) | Warehouse package — ORM `Base`, models, Alembic. Currently holds the corporate tables | Postgres / SQLite | Tables: `exchanges`, `companies`, `insiders`. SQLAlchemy 2.0 ORM + Alembic |
 | [`market_data/`](market_data/) | Daily OHLCV loader (yfinance) | Postgres / SQLite | Table: `daily_ohlcv` |
-| [`descriptions/`](descriptions/) | yfinance profile loader that populates `corporate_db` | (writes to corporate_db) | `populate_db.py` |
+| [`descriptions/`](descriptions/) | yfinance profile loader that populates `findata` | (writes to findata) | `populate_db.py` |
 | [`FinancialWebScrapers/`](FinancialWebScrapers/) | SEC EDGAR / XBRL scrapers | MongoDB | Will migrate to Postgres in cleanup Phase 6 |
 | [`SentimentAnalysis/`](SentimentAnalysis/) | Legacy Flask demo app | none | Kept functional; will move to `legacy/` in cleanup Phase 5 |
 | [`notebooks/`](notebooks/) | Exploratory Jupyter notebooks | — | Throwaway exploration, not imported by pipeline code |
@@ -28,7 +28,7 @@ The repository is mid-consolidation. See [`docs/CLEANUP_PLAN.md`](docs/CLEANUP_P
 python -m venv .venv && source .venv/bin/activate
 pip install -r news_articles/requirements.txt \
             -r market_data/requirements.txt \
-            -r corporate_db/requirements.txt
+            -r findata/requirements.txt
 
 cp .env.example .env
 # edit .env to set DATABASE_URL
@@ -42,7 +42,8 @@ make help                                # list available targets
 make news                                # RSS news extraction
 make news-fnspid TICKERS="AAPL MSFT"     # FNSPID historical news
 make market-data TICKERS="AAPL MSFT"     # daily OHLCV
-make corporate-db                        # init / seed corporate schema
+make corporate-db                        # init / seed corporate schema (python -m findata)
+alembic upgrade head                     # apply DB migrations (the production path)
 make sentiment                           # legacy Flask app (port 5151)
 ```
 
@@ -52,9 +53,8 @@ make sentiment                           # legacy Flask app (port 5151)
 
 ```
 Financial_Tools/
-├── findata/                # (planned — see docs/CLEANUP_PLAN.md)
+├── findata/                # Warehouse package — ORM Base, models, Alembic (see docs/CLEANUP_PLAN.md)
 ├── news_articles/          # News ETL pipeline
-├── corporate_db/           # Company / exchange profiles (ORM + Alembic)
 ├── market_data/            # Daily OHLCV loader
 ├── descriptions/           # yfinance profile loader
 ├── FinancialWebScrapers/   # SEC EDGAR scrapers (MongoDB, migrating)
@@ -62,5 +62,6 @@ Financial_Tools/
 ├── notebooks/              # Exploratory notebooks
 ├── docs/                   # Plans + generated schema reference
 ├── load_news_articles.py   # News ETL entry point
+├── alembic.ini             # Alembic config (points at findata/db/migrations)
 └── Makefile                # Common targets
 ```

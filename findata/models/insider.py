@@ -15,18 +15,18 @@ from sqlalchemy import Boolean, Date, DateTime, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.schema import ForeignKey
 
-from .base import Base
+from findata.db.base import Base
 
 if TYPE_CHECKING:
     from .company import Company
 
 
 class Insider(Base):
-    """Board member or insider associated with a :class:`~corporate_db.models.company.Company`.
+    """Board member or insider associated with a :class:`~findata.models.company.Company`.
 
     Attributes:
         id:             Auto-incrementing primary key.
-        company_id:     FK to :class:`~corporate_db.models.company.Company`.
+        company_id:     FK to :class:`~findata.models.company.Company`.
         name:           Full legal name.
         role:           Job title / role, e.g. ``CEO``, ``Director``, ``CFO``.
         is_board_member: Whether the person sits on the board.

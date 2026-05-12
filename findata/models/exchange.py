@@ -1,7 +1,7 @@
 """
 Exchange model — represents a stock exchange (NYSE, NASDAQ, TSX, TSXV, …).
 
-Each Exchange has a one-to-many relationship with :class:`~corporate_db.models.company.Company`.
+Each Exchange has a one-to-many relationship with :class:`~findata.models.company.Company`.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from typing import List, Optional, TYPE_CHECKING
 from sqlalchemy import DateTime, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .base import Base
+from findata.db.base import Base
 
 if TYPE_CHECKING:
     from .company import Company

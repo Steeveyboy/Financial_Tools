@@ -31,7 +31,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.schema import ForeignKey
 
-from .base import Base
+from findata.db.base import Base
 
 if TYPE_CHECKING:
     from .exchange import Exchange
@@ -45,7 +45,7 @@ class Company(Base):
         id:             Auto-incrementing primary key.
         name:           Legal company name.
         ticker:         Stock ticker symbol (e.g. ``AAPL``).
-        exchange_id:    FK to :class:`~corporate_db.models.exchange.Exchange`.
+        exchange_id:    FK to :class:`~findata.models.exchange.Exchange`.
         country:        Country of incorporation.
         sector:         GICS sector classification.
         industry:       GICS industry classification.

@@ -1,8 +1,8 @@
-"""Populate the corporate_db database from descriptions/company_info.json.
+"""Populate the findata corporate tables from descriptions/company_info.json.
 
 This script reads the yfinance data collected by the description_parsing
 notebook and upserts Company rows into the database managed by the
-``corporate_db`` package.
+``findata`` package.
 
 Usage (from the repo root)::
 
@@ -22,10 +22,10 @@ from typing import Any
 
 from sqlalchemy import select
 
-# corporate_db imports — the repo root must be on sys.path
-from corporate_db.db.connection import get_session
-from corporate_db.models.company import Company
-from corporate_db.models.exchange import Exchange
+# findata imports — the repo root must be on sys.path
+from findata.db.session import get_session
+from findata.models.company import Company
+from findata.models.exchange import Exchange
 
 logger = logging.getLogger(__name__)
 
@@ -179,7 +179,7 @@ def populate(path: Path, *, dry_run: bool = False) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Populate corporate_db from yfinance company_info.json",
+        description="Populate findata corporate tables from yfinance company_info.json",
     )
     parser.add_argument(
         "--file", "-f",

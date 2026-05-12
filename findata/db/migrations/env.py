@@ -1,9 +1,9 @@
 """
-Alembic environment file for corporate_db.
+Alembic environment file for findata.
 
 This file is loaded by Alembic when running migration commands.  It:
 
-1. Reads the database URL from :mod:`corporate_db.config` (which in turn
+1. Reads the database URL from :mod:`findata.config` (which in turn
    reads ``DATABASE_URL`` from the environment, falling back to SQLite).
 2. Imports all ORM models so that Alembic's autogenerate feature can
    diff ``Base.metadata`` against the current database schema.
@@ -36,8 +36,8 @@ logger = logging.getLogger("alembic.env")
 # ---------------------------------------------------------------------------
 # The import order matters: base must be imported before the models that
 # reference it, and the models __init__ handles that correctly.
-from corporate_db.models import Base  # noqa: E402
-from corporate_db.models import Exchange, Company, Insider  # noqa: E402, F401
+from findata.models import Base  # noqa: E402
+from findata.models import Exchange, Company, Insider  # noqa: E402, F401
 
 target_metadata = Base.metadata
 
@@ -54,7 +54,7 @@ def _get_url() -> str:
     if ini_url and ini_url != "driver://user:pass@host/dbname":
         return ini_url
     # Ultimate fallback: local SQLite file
-    return "sqlite:///corporate_db.sqlite3"
+    return "sqlite:///resonance.db"
 
 
 # ---------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 -- =============================================================================
--- corporate_db — PostgreSQL DDL reference
+-- findata corporate tables — PostgreSQL DDL reference
 -- =============================================================================
 -- This file documents the intended schema in plain SQL (PostgreSQL dialect).
 -- It is for reference / manual use only.  All schema changes should be
@@ -8,7 +8,7 @@
 -- Generate from models:
 --   python -c "
 --   from sqlalchemy.schema import CreateTable
---   from corporate_db.models import Base, Exchange, Company, Insider
+--   from findata.models import Base, Exchange, Company, Insider
 --   from sqlalchemy.dialects import postgresql
 --   for t in Base.metadata.sorted_tables:
 --       print(CreateTable(t).compile(dialect=postgresql.dialect()))
@@ -126,7 +126,7 @@ COMMENT ON COLUMN insiders.end_date          IS 'Date the role ended; NULL means
 -- SQLite note
 -- =============================================================================
 -- When using SQLite, the following FTS5 virtual table is created automatically
--- by corporate_db.db.connection.init_db():
+-- by findata.db.session.init_db():
 --
 --   CREATE VIRTUAL TABLE company_fts
 --   USING fts5(

@@ -1,16 +1,16 @@
 """
-Configuration for the corporate_db module.
+Configuration for the findata package.
 
 DATABASE_URL is read from the environment variable of the same name.
 If the variable is not set, the module falls back to a local SQLite file
-``corporate_db.sqlite3`` in the current working directory.
+``resonance.db`` in the current working directory.
 
 Set ``ECHO_SQL=1`` (or any truthy string) in the environment to enable
 SQLAlchemy query logging — useful during development.
 
 Example .env file::
 
-    DATABASE_URL=postgresql+psycopg2://user:pass@localhost/corp_db
+    DATABASE_URL=postgresql+psycopg2://user:pass@localhost/resonance
     ECHO_SQL=0
 """
 
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # .env loading — anchored to repo root regardless of the working directory
 # ---------------------------------------------------------------------------
-# This file lives at  <repo_root>/corporate_db/config.py
+# This file lives at  <repo_root>/findata/config.py
 # The .env file lives at <repo_root>/.env
 _ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
 
@@ -47,10 +47,9 @@ DATABASE_URL: str = os.environ.get("DATABASE_URL", "")
 
 if not DATABASE_URL:
     logger.warning(
-        "DATABASE_URL is not set; falling back to local SQLite file "
-        "'corporate_db.sqlite3'."
+        "DATABASE_URL is not set; falling back to local SQLite file 'resonance.db'."
     )
-    DATABASE_URL = "sqlite:///corporate_db.sqlite3"
+    DATABASE_URL = "sqlite:///resonance.db"
 else:
     # Log connection target without exposing credentials
     try:

@@ -13,9 +13,9 @@ Today the repo is mid-migration: several independent modules each write to the s
 | Directory | Role | Storage | Key Tech |
 |-----------|------|---------|----------|
 | `news_articles/` | News ETL pipeline (active) | Postgres / SQLite (`articles`, `article_tickers`) | SQLAlchemy Core, feedparser, HuggingFace datasets |
-| `corporate_db/` | Company / exchange profiles | Postgres / SQLite (`exchanges`, `companies`, `insiders`) | SQLAlchemy 2.0 ORM + Alembic |
+| `findata/` | Warehouse package — single ORM `Base`, models, one Alembic tree. Currently holds the corporate tables | Postgres / SQLite (`exchanges`, `companies`, `insiders`) | SQLAlchemy 2.0 ORM + Alembic |
 | `market_data/` | Daily OHLCV loader | Postgres / SQLite (`daily_ohlcv`) | yfinance, raw SQL + pandas |
-| `descriptions/` | yfinance profile loader for `corporate_db` | (writes to corporate_db) | Pandas, yfinance |
+| `descriptions/` | yfinance profile loader for `findata` | (writes to findata) | Pandas, yfinance |
 | `FinancialWebScrapers/` | SEC EDGAR / XBRL scrapers | MongoDB (`finance_database.company-facts`) | Requests, Pydantic, pymongo |
 | `SentimentAnalysis/` | Legacy Flask demo app | none (in-memory) | Flask, NLTK, scikit-learn |
 | `notebooks/` | Exploratory Jupyter notebooks | — | Pandas, yfinance, Matplotlib |
@@ -45,6 +45,16 @@ export DATABASE_URL="sqlite:///resonance.db"   # or postgresql://...
 ```
 
 Run the pipeline from the project root (`Financial_Tools/`), not from inside `news_articles/`.
+
+## findata — warehouse package
+
+The target home for the whole warehouse (see `docs/CLEANUP_PLAN.md`). Structure:
+- `findata/db/base.py` — the one `DeclarativeBase`. Every table is an ORM model under `findata/models/` inheriting it, so `Base.metadata` is the authoritative table list.
+- `findata/db/session.py` — `get_engine()`, `get_session()` (commit/rollback context manager), `init_db()` (create_all + seed default exchanges).
+- `findata/db/migrations/` — the single Alembic tree; `alembic.ini` is at the repo root. `env.py` reads `DATABASE_URL` and imports `findata.models` for autogenerate.
+- `findata/config.py` — `DATABASE_URL` / `ECHO_SQL`, loads `<repo_root>/.env`.
+
+`python -m findata` runs `init_db()` (dev convenience); `alembic upgrade head` is the production path. Currently only the corporate tables (`exchanges`, `companies`, `insiders`) live here; news / market / SEC tables migrate in per the cleanup plan. `companies` has dialect-conditional full-text search (Postgres GIN / SQLite FTS5) — see `models/company.py`.
 
 ## SentimentAnalysis
 
@@ -77,9 +87,9 @@ python app.py
 
 | Variable | Used by | Notes |
 |---|---|---|
-| `DATABASE_URL` | `news_articles`, `market_data`, `corporate_db` | SQLAlchemy URL; required |
+| `DATABASE_URL` | `news_articles`, `market_data`, `findata` | SQLAlchemy URL; required |
 | `NEWS_LOG_LEVEL` | `news_articles` | Default: `INFO` |
-| `ECHO_SQL` | `corporate_db` | Truthy → log all SQL; default off |
+| `ECHO_SQL` | `findata` | Truthy → log all SQL; default off |
 | `START_DATE`, `END_DATE` | `market_data` | Optional `YYYY-MM-DD` defaults for OHLCV fetch |
 
 Place these in a `.env` file at the project root — all modules call `load_dotenv()` automatically. See `.env.example` for the full set.
