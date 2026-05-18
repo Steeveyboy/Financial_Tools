@@ -5,7 +5,7 @@ A Python project building a single Postgres-backed financial data warehouse that
 - **Timeseries market pricing** (daily OHLCV)
 - **Company information** (profiles, exchanges, sector / industry / classification)
 - **Timeseries news** (Reuters RSS + FNSPID historical dataset)
-- **SEC filings** (XBRL income-statement data — currently MongoDB, migrating to Postgres)
+- **SEC filings** (XBRL income-statement data — migrating to Postgres in Phase 6)
 
 The repository is mid-consolidation. See [`docs/CLEANUP_PLAN.md`](docs/CLEANUP_PLAN.md) for the target structure (one `findata/` package, one ORM `Base`, one Alembic history) and the phased rollout.
 
@@ -13,11 +13,10 @@ The repository is mid-consolidation. See [`docs/CLEANUP_PLAN.md`](docs/CLEANUP_P
 
 | Module | Role | Storage | Notes |
 |---|---|---|---|
-| [`news_articles/`](news_articles/) | News ETL pipeline — RSS + FNSPID extractors, sentiment transformer | Postgres / SQLite | Tables: `articles`, `article_tickers` |
-| [`findata/`](findata/) | Warehouse package — ORM `Base`, models, Alembic. Currently holds the corporate tables | Postgres / SQLite | Tables: `exchanges`, `companies`, `insiders`. SQLAlchemy 2.0 ORM + Alembic |
-| [`market_data/`](market_data/) | Daily OHLCV loader (yfinance) | Postgres / SQLite | Table: `daily_ohlcv` |
-| [`descriptions/`](descriptions/) | yfinance profile loader that populates `findata` | (writes to findata) | `populate_db.py` |
-| [`FinancialWebScrapers/`](FinancialWebScrapers/) | SEC EDGAR / XBRL scrapers | MongoDB | Will migrate to Postgres in cleanup Phase 6 |
+| [`findata/`](findata/) | Warehouse package — ORM `Base`, models, Alembic tree, and source ETL packages under `findata/sources/` | Postgres / SQLite | Tables: `exchanges`, `companies`, `insiders`, `articles`, `article_tickers`. SQLAlchemy 2.0 ORM + Alembic |
+| [`findata/sources/news/`](findata/sources/news/) | News ETL — RSS + FNSPID extractors, sentiment / entity transformer stubs | (writes to findata) | `ArticleRepository` over the `articles` / `article_tickers` ORM models |
+| [`market_data/`](market_data/) | Daily OHLCV loader (yfinance) | Postgres / SQLite | Table: `daily_ohlcv` (Phase 3: port to ORM) |
+| [`descriptions/`](descriptions/) | yfinance profile loader that populates `findata` | (writes to findata) | `populate_db.py` (Phase 4: fold into `findata/sources/corporate/`) |
 | [`SentimentAnalysis/`](SentimentAnalysis/) | Legacy Flask demo app | none | Kept functional; will move to `legacy/` in cleanup Phase 5 |
 | [`notebooks/`](notebooks/) | Exploratory Jupyter notebooks | — | Throwaway exploration, not imported by pipeline code |
 
@@ -26,9 +25,9 @@ The repository is mid-consolidation. See [`docs/CLEANUP_PLAN.md`](docs/CLEANUP_P
 ```bash
 # from repo root
 python -m venv .venv && source .venv/bin/activate
-pip install -r news_articles/requirements.txt \
-            -r market_data/requirements.txt \
-            -r findata/requirements.txt
+pip install -r findata/requirements.txt \
+            -r findata/sources/news/requirements.txt \
+            -r market_data/requirements.txt
 
 cp .env.example .env
 # edit .env to set DATABASE_URL
@@ -53,12 +52,14 @@ make sentiment                           # legacy Flask app (port 5151)
 
 ```
 Financial_Tools/
-├── findata/                # Warehouse package — ORM Base, models, Alembic (see docs/CLEANUP_PLAN.md)
-├── news_articles/          # News ETL pipeline
-├── market_data/            # Daily OHLCV loader
-├── descriptions/           # yfinance profile loader
-├── FinancialWebScrapers/   # SEC EDGAR scrapers (MongoDB, migrating)
-├── SentimentAnalysis/      # Legacy Flask app
+├── findata/                # Warehouse package — ORM Base, models, Alembic, source ETL packages
+│   ├── db/                 #   session + Alembic tree
+│   ├── models/             #   one ORM model per table (Base.metadata)
+│   └── sources/
+│       └── news/           #   News ETL — extractors, transformers, ArticleRepository
+├── market_data/            # Daily OHLCV loader (Phase 3: pending port)
+├── descriptions/           # yfinance profile loader (Phase 4: pending fold-in)
+├── SentimentAnalysis/      # Legacy Flask app (Phase 5: move to legacy/)
 ├── notebooks/              # Exploratory notebooks
 ├── docs/                   # Plans + generated schema reference
 ├── load_news_articles.py   # News ETL entry point

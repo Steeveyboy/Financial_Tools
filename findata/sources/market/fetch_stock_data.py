@@ -295,18 +295,21 @@ def main():
     # ----------------------------------------------------------------
     failed: list[str] = []
 
-    for ticker in tqdm(args.tickers, desc="Fetching tickers", unit="ticker"):
-        try:
-            fetcher = StockDataFetcher(ticker, args.start, args.end)
-            df = fetcher.fetch()
+    try:
+        for ticker in tqdm(args.tickers, desc="Fetching tickers", unit="ticker"):
+            try:
+                fetcher = StockDataFetcher(ticker, args.start, args.end)
+                df = fetcher.fetch()
 
-            if df.empty:
-                continue
+                if df.empty:
+                    continue
 
-            db.insert(df)
-        except Exception as exc:
-            _logger.error("[%s] Unexpected error — skipping: %s", ticker, exc)
-            failed.append(ticker)
+                db.insert(df)
+            except Exception as exc:
+                _logger.error("[%s] Unexpected error — skipping: %s", ticker, exc)
+                failed.append(ticker)
+    finally:
+        pass
 
     if failed:
         _logger.warning(
