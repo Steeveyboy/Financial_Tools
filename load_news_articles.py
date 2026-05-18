@@ -22,10 +22,10 @@ import sys
 
 from sqlalchemy import create_engine
 
-from news_articles.config import LOG_LEVEL, get_db_url
-from news_articles.extractors.huggingface import FNSPIDExtractor
-from news_articles.extractors.rss import RSSExtractor
-from news_articles.pipeline import ExtractionPipeline
+from findata.sources.news.config import LOG_LEVEL, get_db_url
+from findata.sources.news.extractors.huggingface import FNSPIDExtractor
+from findata.sources.news.extractors.rss import RSSExtractor
+from findata.sources.news.pipeline import ExtractionPipeline
 
 # ---------------------------------------------------------------------------
 # Logging setup — suppress chatty third-party loggers that drown out our own
