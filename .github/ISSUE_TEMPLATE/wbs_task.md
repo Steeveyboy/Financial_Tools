@@ -12,7 +12,7 @@ assignees: ''
 
 ## WBS Context
 
-- **Parent WBS item:** <!-- e.g., "news_articles ETL pipeline" -->
+- **Parent WBS item:** <!-- e.g., "findata news ETL pipeline" -->
 - **Dependencies:** <!-- Issues that must be completed first, e.g., #3 -->
 - **Estimated complexity:** <!-- small / medium / large -->
 

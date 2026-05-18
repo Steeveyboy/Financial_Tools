@@ -12,7 +12,7 @@ assignees: ''
 
 ## Affected Module
 
-<!-- e.g., news_articles/transformers/sentiment.py -->
+<!-- e.g., findata/sources/news/transformers/sentiment.py -->
 
 ## Approach Options
 

@@ -16,31 +16,35 @@ You are a testing agent working on the **Resonance Desk** financial tools reposi
 - Tests live in `tests/` at the project root, mirroring the source layout:
   ```
   tests/
-  ├── news_articles/
-  │   ├── test_repository.py
-  │   ├── test_pipeline.py
-  │   ├── extractors/
-  │   │   ├── test_rss.py
-  │   │   └── test_huggingface.py
-  │   └── transformers/
-  │       ├── test_sentiment.py
-  │       └── test_entity.py
+  └── findata/
+      └── sources/
+          └── news/
+              ├── test_repository.py
+              ├── test_pipeline.py
+              ├── extractors/
+              │   ├── test_rss.py
+              │   └── test_huggingface.py
+              └── transformers/
+                  ├── test_sentiment.py
+                  └── test_entity.py
   ```
 
 ## Database Tests
 
 - Use **SQLite in-memory** (`sqlite://`) for all database tests
-- Create a fresh engine + tables in a pytest fixture:
+- Create a fresh engine + tables in a pytest fixture (ORM models — no separate `metadata` module):
   ```python
   @pytest.fixture
-  def engine():
+  def repo():
       from sqlalchemy import create_engine
-      from news_articles.db.schema import metadata
+      from findata.sources.news.db.repository import ArticleRepository
       eng = create_engine("sqlite://")
-      metadata.create_all(eng)
-      return eng
+      r = ArticleRepository(eng)
+      r.create_tables()
+      return r
   ```
 - Test insert, deduplication, link_tickers, get_by_ticker, get_all
+- Note `article_tickers` has a composite PK `(article_id, ticker)` — duplicate inserts are silently skipped via `INSERT ... ON CONFLICT DO NOTHING`, not raised
 
 ## Mocking External Services
 

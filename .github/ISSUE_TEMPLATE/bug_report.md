@@ -32,4 +32,4 @@ assignees: ''
 
 ## Affected Module
 
-<!-- e.g., news_articles/db/repository.py -->
+<!-- e.g., findata/sources/news/db/repository.py -->
