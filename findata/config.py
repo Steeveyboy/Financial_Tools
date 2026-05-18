@@ -21,6 +21,15 @@ from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
+
+# ---------------------------------------------------------------------------
+# Configuration helpers
+# ---------------------------------------------------------------------------
+
+def _env(key: str, default: str | None = None) -> str | None:
+    """Return an environment variable value, falling back to a default."""
+    return os.environ.get(key, default)
+
 # ---------------------------------------------------------------------------
 # .env loading — anchored to repo root regardless of the working directory
 # ---------------------------------------------------------------------------
