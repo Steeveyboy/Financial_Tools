@@ -13,10 +13,10 @@ Phase 2 — Transformation (run separately, can be re-run at any time):
 
 Usage:
     from sqlalchemy import create_engine
-    from news_articles.pipeline import ExtractionPipeline, TransformationPipeline
-    from news_articles.extractors.rss import RSSExtractor
-    from news_articles.transformers.sentiment import SentimentTransformer
-    from news_articles.transformers.entity import EntityTransformer
+    from findata.sources.news.pipeline import ExtractionPipeline, TransformationPipeline
+    from findata.sources.news.extractors.rss import RSSExtractor
+    from findata.sources.news.transformers.sentiment import SentimentTransformer
+    from findata.sources.news.transformers.entity import EntityTransformer
 
     engine = create_engine(db_url)
 

@@ -1,7 +1,7 @@
 """
 config.py
 
-Loads configuration from environment variables for the news_articles module.
+Loads configuration from environment variables for the news source.
 
 Required:
     DATABASE_URL  - SQLAlchemy connection string (shared with market_data)

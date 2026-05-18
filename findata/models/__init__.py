@@ -11,5 +11,6 @@ from .company import Company
 from .insider import Insider
 from .article import Article
 from .article_ticker import ArticleTicker
+from .daily_ohlcv import DailyOHLCV
 
-__all__ = ["Base", "Exchange", "Company", "Insider", "Article", "ArticleTicker"]
+__all__ = ["Base", "Exchange", "Company", "Insider", "Article", "ArticleTicker", "DailyOHLCV"]

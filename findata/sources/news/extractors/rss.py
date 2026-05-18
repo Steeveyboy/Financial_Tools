@@ -11,7 +11,7 @@ Configured for Reuters Business News by default, but accepts any list of
 feed URLs so additional outlets can be added without changing this file.
 
 Usage:
-    from news_articles.extractors.rss import RSSExtractor
+    from findata.sources.news.extractors.rss import RSSExtractor
 
     extractor = RSSExtractor(feed_urls=[
         "https://feeds.reuters.com/reuters/businessNews",

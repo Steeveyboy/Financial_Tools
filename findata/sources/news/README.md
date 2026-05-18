@@ -1,8 +1,10 @@
-# News Articles ETL
+# findata.sources.news — News ETL
 
-Ingests financial news articles from multiple sources into a shared database for downstream analysis — sentiment scoring, entity extraction, and correlation with market price data.
+Ingests financial news articles from multiple sources into the `articles` /
+`article_tickers` tables of the findata warehouse for downstream analysis —
+sentiment scoring, entity extraction, and correlation with market price data.
 
-Part of the [Resonance Desk](../README.md) data warehouse.
+Part of the [Resonance Desk](../../../README.md) data warehouse.
 
 ---
 
@@ -29,22 +31,31 @@ Keeping extraction and transformation separate means:
 ### Module layout
 
 ```
-news_articles/
-  config.py               # DATABASE_URL and environment variable loading
-  pipeline.py             # ExtractionPipeline, TransformationPipeline
-  db/
-    schema.py             # SQLAlchemy table definitions (articles, article_tickers)
-    repository.py         # All database reads and writes
-  extractors/
-    base.py               # ArticleExtractor abstract base class
-    rss.py                # RSS/Atom feed extractor (Reuters Business)
-    huggingface.py        # HuggingFace dataset extractor (FNSPID)
-  transformers/
-    base.py               # ArticleTransformer abstract base class
-    sentiment.py          # Sentiment scoring stub
-    entity.py             # Ticker entity extraction stub
-  requirements.txt
+findata/
+  models/
+    article.py             # Article ORM model (defines the articles table)
+    article_ticker.py      # ArticleTicker ORM model (composite PK)
+  sources/
+    news/
+      config.py            # DATABASE_URL and environment variable loading
+      pipeline.py          # ExtractionPipeline, TransformationPipeline
+      db/
+        repository.py      # ArticleRepository — all DB reads and writes
+      extractors/
+        base.py            # ArticleExtractor abstract base class
+        rss.py             # RSS/Atom feed extractor (Reuters Business)
+        huggingface.py     # HuggingFace dataset extractor (FNSPID)
+      transformers/
+        base.py            # ArticleTransformer abstract base class
+        sentiment.py       # Sentiment scoring stub
+        entity.py          # Ticker entity extraction stub
+      requirements.txt
 ```
+
+Schema definitions live in `findata.models`; the news source only contains
+extraction/transform logic and the repository that wraps the underlying
+ORM models. Migrations live in the single Alembic tree at
+`findata/db/migrations/`.
 
 ### Database tables
 
@@ -56,18 +67,22 @@ news_articles/
 | `url` | TEXT | Unique — used for deduplication |
 | `title` | TEXT | Headline |
 | `author` | TEXT | Byline (nullable) |
-| `publisher` | TEXT | Outlet name, e.g. "Reuters" |
-| `source` | TEXT | Extractor identifier, e.g. "rss" |
+| `publisher` | VARCHAR(255) | Outlet name, e.g. "Reuters" |
+| `source` | VARCHAR(64) | Extractor identifier, e.g. "rss" |
 | `content` | TEXT | Plain text body (nullable) |
-| `published_at` | DATETIME | Publication timestamp (UTC) |
-| `fetched_at` | DATETIME | Row insert timestamp (set by DB) |
+| `published_at` | DATETIME | Publication timestamp |
+| `fetched_at` | DATETIME | Row insert timestamp (server default `now()`) |
 
 **`article_tickers`** — links articles to the companies they mention
 
 | Column | Type | Notes |
 |---|---|---|
-| `article_id` | INTEGER | Foreign key → articles.id |
-| `ticker` | TEXT | e.g. "AAPL" |
+| `article_id` | INTEGER | FK → `articles.id` (`ON DELETE CASCADE`); part of PK |
+| `ticker` | VARCHAR(10) | e.g. "AAPL"; part of PK |
+
+The composite primary key `(article_id, ticker)` means the same pair can only
+be linked once. Inserts use `INSERT ... ON CONFLICT DO NOTHING` so transforms
+can be safely re-run without raising `IntegrityError`.
 
 ---
 
@@ -76,7 +91,7 @@ news_articles/
 **1. Install dependencies**
 
 ```bash
-pip install -r news_articles/requirements.txt
+pip install -r findata/sources/news/requirements.txt
 ```
 
 **2. Set the database URL**
@@ -87,7 +102,7 @@ export DATABASE_URL="postgresql://user:pass@localhost:5432/resonance"
 export DATABASE_URL="sqlite:///resonance.db"
 ```
 
-Add this to a `.env` file in the project root to avoid setting it every session.
+Add this to a `.env` file at the project root to avoid setting it every session.
 
 ---
 
@@ -95,22 +110,29 @@ Add this to a `.env` file in the project root to avoid setting it every session.
 
 Run from the project root (`Financial_Tools/`).
 
+The convenience script `load_news_articles.py` wires up the RSS and FNSPID
+extractors and runs `ExtractionPipeline`:
+
+```bash
+python load_news_articles.py                     # RSS only (default)
+python load_news_articles.py --fnspid \
+    --tickers AAPL MSFT NVDA \
+    --start-date 2020-01-01 --end-date 2023-12-31
+```
+
+To drive the pipeline directly from Python:
+
 **Phase 1 — Extract and load articles**
 
 ```python
-from sqlalchemy import create_engine
-from news_articles.pipeline import ExtractionPipeline
-from news_articles.extractors.rss import RSSExtractor
-from news_articles.extractors.huggingface import FNSPIDExtractor
+from findata.sources.news.pipeline import ExtractionPipeline
+from findata.sources.news.extractors.rss import RSSExtractor
+from findata.sources.news.extractors.huggingface import FNSPIDExtractor
 
-engine = create_engine("sqlite:///resonance.db")
-
-ExtractionPipeline(engine, extractors=[
-    # Reuters Business RSS feed (fetches latest articles)
+# ExtractionPipeline accepts an explicit engine or falls back to
+# findata.db.session.get_engine() (which reads DATABASE_URL).
+ExtractionPipeline(engine=None, extractors=[
     RSSExtractor(),
-
-    # FNSPID historical dataset — filter by ticker and date to avoid
-    # streaming all 15.7 million rows
     FNSPIDExtractor(
         tickers=["AAPL", "MSFT", "NVDA"],
         start_date="2020-01-01",
@@ -122,17 +144,17 @@ ExtractionPipeline(engine, extractors=[
 **Phase 2 — Apply transforms** *(once transformers are implemented)*
 
 ```python
-from news_articles.pipeline import TransformationPipeline
-from news_articles.transformers.sentiment import SentimentTransformer
-from news_articles.transformers.entity import EntityTransformer
+from findata.sources.news.pipeline import TransformationPipeline
+from findata.sources.news.transformers.sentiment import SentimentTransformer
+from findata.sources.news.transformers.entity import EntityTransformer
 
-TransformationPipeline(engine, transformers=[
+TransformationPipeline(engine=None, transformers=[
     SentimentTransformer(),
     EntityTransformer(),
 ]).run()
 
 # Re-run a single transform by name
-TransformationPipeline(engine, transformers=[SentimentTransformer()]).run("sentiment")
+TransformationPipeline(engine=None, transformers=[SentimentTransformer()]).run("sentiment")
 ```
 
 ---
@@ -142,7 +164,7 @@ TransformationPipeline(engine, transformers=[SentimentTransformer()]).run("senti
 Create a new file in `extractors/` that subclasses `ArticleExtractor`:
 
 ```python
-# extractors/my_source.py
+# findata/sources/news/extractors/my_source.py
 from .base import ArticleExtractor
 
 class MySourceExtractor(ArticleExtractor):
@@ -150,15 +172,14 @@ class MySourceExtractor(ArticleExtractor):
 
     def extract(self) -> list[dict]:
         # Fetch articles from your source here.
-        # Return a list of dicts with these fields:
         return [
             {
-                "url":          "https://...",   # required — used for dedup
+                "url":          "https://...",      # required — used for dedup
                 "title":        "Headline",
-                "author":       "Jane Smith",     # optional
-                "publisher":    "My Outlet",      # optional
-                "content":      "Article body...", # optional, plain text only
-                "published_at": datetime(...),    # optional
+                "author":       "Jane Smith",        # optional
+                "publisher":    "My Outlet",         # optional
+                "content":      "Article body...",   # optional, plain text only
+                "published_at": datetime(...),       # required
             }
         ]
 ```
@@ -166,15 +187,16 @@ class MySourceExtractor(ArticleExtractor):
 Then register it in the pipeline:
 
 ```python
-ExtractionPipeline(engine, extractors=[
+ExtractionPipeline(engine=None, extractors=[
     RSSExtractor(),
     MySourceExtractor(),
 ]).run()
 ```
 
-That's it. The pipeline handles deduplication, source tagging, and database insertion automatically.
-
-If your source already knows which tickers an article is about, include a `mentioned_tickers` field (list of strings) in each dict — the pipeline will link them to the `article_tickers` table at load time without needing to run the `EntityTransformer`.
+If your source already knows which tickers an article is about, include a
+`mentioned_tickers` field (list of strings) in each dict — the pipeline will
+link them to the `article_tickers` table at load time without needing to run
+the `EntityTransformer`.
 
 ```python
 {

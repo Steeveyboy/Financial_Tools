@@ -17,7 +17,7 @@ Dataset schema (populated columns only):
     Publisher     - Outlet name
 
 Usage:
-    from news_articles.extractors.huggingface import FNSPIDExtractor
+    from findata.sources.news.extractors.huggingface import FNSPIDExtractor
 
     extractor = FNSPIDExtractor(
         tickers=["AAPL", "MSFT", "NVDA"],
