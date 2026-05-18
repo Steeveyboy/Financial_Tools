@@ -1,11 +1,15 @@
 # Repo Cleanup Plan — Financial Data Warehouse
 
-Status: **in progress** — Phase 0 and Phase 1 done. Decisions captured below.
+Status: **in progress** — Phases 0, 1, and 2 done. Decisions captured below.
 
 Progress:
 - ✅ Phase 0 — hygiene: notebooks consolidated under `notebooks/`, docs refreshed, `.env.example` added, merged branches pruned.
 - ✅ Phase 1 — `findata/` package created: `corporate_db/` moved in (`findata/db/{base,session}.py`, `findata/models/`, `findata/config.py`), single Alembic tree at `findata/db/migrations/` with `alembic.ini` at the repo root, `corporate_db/` removed, all importers updated (`descriptions/populate_db.py`, `Makefile`).
-- ✅ Phase 2 (partial) — news tables ported to ORM: `findata/models/article.py` + `article_ticker.py`, migration `0002_news_tables.py`, `news_articles/db/schema.py` deleted, `news_articles/db/repository.py` now sources its Table objects from `findata.models`. **Deferred to a follow-up:** (a) rewriting `ArticleRepository` to use ORM sessions instead of Core statements, (b) relocating `news_articles/` under `findata/sources/news/` — kept in place for now since it's the active module and to keep this diff focused. `article_tickers` gained a composite PK `(article_id, ticker)` (the old Core table had no PK).
+- ✅ Phase 2 — news tables fully ported and relocated:
+  - ORM models `findata/models/article.py` + `article_ticker.py`; migration `0002_news_tables.py` adds them.
+  - `article_tickers` gained a composite PK `(article_id, ticker)` (the old Core table had no PK). Repository inserts use dialect-aware `INSERT … ON CONFLICT DO NOTHING` so transforms can be re-run safely.
+  - `ArticleRepository` rewritten on top of SQLAlchemy 2.0 ORM sessions (via `findata.db.session`) — no more Core statements; `select(Article).join(ArticleTicker)…` everywhere. `ArticleRepository()` with no args falls back to the configured `findata` engine.
+  - `news_articles/` relocated to `findata/sources/news/` (`config.py`, `pipeline.py`, `db/repository.py`, `extractors/*`, `transformers/*`, `requirements.txt`). `load_news_articles.py` at the repo root imports through the new paths.
 - ⬜ Phases 3–7 — see below.
 
 ## Goal
@@ -30,20 +34,19 @@ that defines every data model and every table.
 
 | Source | Lives in | Storage today | Tables / collections | Schema defined as |
 |---|---|---|---|---|
-| News (Reuters RSS + FNSPID dataset) | `news_articles/` | Postgres/SQLite (`DATABASE_URL`) | `articles`, `article_tickers` | SQLAlchemy **Core** `Table`/`MetaData` (`db/schema.py`) |
-| Company profiles (yfinance `info`) | `corporate_db/` (fed by `descriptions/populate_db.py`) | Postgres/SQLite (`DATABASE_URL`) | `exchanges`, `companies`, `insiders` (stub) | SQLAlchemy **2.0 ORM** + **Alembic** |
-| Market prices (yfinance OHLCV) | `market_data/fetch_stock_data.py` | Postgres/SQLite (`DATABASE_URL`) | `daily_ohlcv` | **Raw `CREATE TABLE` string** + `pandas.to_sql` |
-| SEC filings / XBRL income statements | `FinancialWebScrapers/` | **MongoDB** (`finance_database` / `company-facts`) | `company-facts` collection | **Pydantic** + JSON tag maps in `dataModels/` |
+| News (Reuters RSS + FNSPID dataset) | `findata/sources/news/` | Postgres/SQLite (`DATABASE_URL`) | `articles`, `article_tickers` | SQLAlchemy **2.0 ORM** + **Alembic** (in `findata.models`) |
+| Company profiles (yfinance `info`) | `findata/` (fed by `descriptions/populate_db.py`) | Postgres/SQLite (`DATABASE_URL`) | `exchanges`, `companies`, `insiders` (stub) | SQLAlchemy **2.0 ORM** + **Alembic** |
+| Market prices (yfinance OHLCV) | `market_data/fetch_stock_data.py` | Postgres/SQLite (`DATABASE_URL`) | `daily_ohlcv` | **Raw `CREATE TABLE` string** + `pandas.to_sql` (Phase 3: port to ORM) |
+| SEC filings / XBRL income statements | (removed in commit `e8e90a8`) | **MongoDB** (legacy) | — | Phase 6 re-adds under `findata/sources/sec/`, writing to Postgres |
 | News sentiment (legacy) | `SentimentAnalysis/` | none — in-memory, renders HTML | — | pickled scikit-learn pipeline |
 
-### Problems
+### Problems remaining (as of Phase 2 completion)
 
-1. **Three DB idioms for one database** — Core tables (news), ORM+Alembic (corporate), raw SQL strings (market). Nothing ties them together; no single `metadata` knows all the tables.
-2. **No single artifact describing the warehouse** — `corporate_db/db/schema.sql` covers 3 tables; the article schema is a docstring; the OHLCV schema is a Python constant.
-3. **`descriptions/`** is half-migrated — `populate_db.py` correctly writes into `corporate_db`, but sits next to notebooks and an append-only concatenated-JSON file (`company_info.json`).
-4. **`SentimentAnalysis/`** duplicates the news-ingestion concept with its own scrapers and committed `.venv`.
-5. **`FinancialWebScrapers/`** is an island — MongoDB + Pydantic, never touches the warehouse.
-6. **Hygiene** — `.venv/` and `SentimentAnalysis/.venv/` committed; `.env` and `market_data/.env` committed (secrets in git); `README.md` / `CLAUDE.md` stale (`CLAUDE.md` says `DB_URL`, code uses `DATABASE_URL`; references `SP500_Analysis/` which is gone); ~10 feature branches, several already merged; 5 separate `requirements.txt`; notebooks scattered across 5 dirs + `.ipynb_checkpoints`.
+1. **`market_data/`** still defines its table via raw `CREATE TABLE` string + `pandas.to_sql` — not part of `Base.metadata`. Phase 3 ports it to ORM.
+2. **`descriptions/`** is half-migrated — `populate_db.py` correctly writes into `findata`, but sits at the repo root next to notebooks and an append-only concatenated-JSON file (`company_info.json`). Phase 4 folds it into `findata/sources/corporate/`.
+3. **`SentimentAnalysis/`** still ships with a committed `.venv` and lives at the repo root. Phase 5 moves it to `legacy/`.
+4. **No single artifact describing the warehouse** — `Base.metadata` is authoritative for everything in `findata.models`, but there's no generated `docs/schema.sql`. Phase 7 adds `make schema`.
+5. **SEC ingestion is gone** — `FinancialWebScrapers/` was removed in commit `e8e90a8`; Phase 6 re-introduces SEC ingestion under `findata/sources/sec/` writing to Postgres.
 
 ## Target structure
 
@@ -110,15 +113,18 @@ Key invariant: **every table is an ORM model under `findata/models/` inheriting 
 - Set up **one** Alembic tree at `findata/db/migrations/` with an initial migration covering the current corporate tables.
 - Move `corporate_db/models/*` → `findata/models/` unchanged (re-pointed at the new `Base`). `corporate_db/` becomes a thin shim or is removed.
 
-### Phase 2 — Port news tables to ORM
-- Convert `news_articles/db/schema.py` Core `Table`s → ORM models `findata/models/article.py`, `article_ticker.py`.
-- `news_articles` repository switches to ORM sessions from `findata.db.session`.
-- One Alembic migration adds `articles` + `article_tickers` (+ `sentiment_score` column / `transform_log` if we do it now).
-- Move `news_articles/` extractor + transformer code under `findata/sources/news/`.
+### Phase 2 — Port news tables to ORM ✅
+- ✅ Convert `news_articles/db/schema.py` Core `Table`s → ORM models `findata/models/article.py`, `article_ticker.py` (`article_tickers` got a real composite PK `(article_id, ticker)` and an `ON DELETE CASCADE` FK to `articles`).
+- ✅ `ArticleRepository` rewritten on SQLAlchemy 2.0 ORM sessions sourced from `findata.db.session.get_engine()`; dialect-aware upsert (Postgres + SQLite) keeps `article_tickers` inserts idempotent when transforms are re-run.
+- ✅ Migration `0002_news_tables.py` adds `articles` + `article_tickers`.
+- ✅ `news_articles/` moved under `findata/sources/news/`; `load_news_articles.py` and all internal docstrings/imports point at the new paths.
+- Deferred: `sentiment_score` column + `transform_log` table — picked up when the sentiment transformer is actually implemented.
 
 ### Phase 3 — Port market data to ORM
 - Replace `market_data`'s `CREATE_TABLE_SQL` with ORM model `findata/models/daily_ohlcv.py`; one migration.
 - Rewrite `fetch_stock_data.py` against `findata.db.session` (keep the `pandas.to_sql` bulk path, just target the ORM-defined table). Move under `findata/sources/market/`.
+
+**Pending DB action (when migrations next run):** The existing Postgres already has a `daily_ohlcv` table (created by the old `ensure_table()` in `fetch_stock_data.py`), so migration `0003_daily_ohlcv` was written by hand rather than autogenerated. Before applying any newer migration to that DB, run `alembic stamp 0003` to record that the table is already present — otherwise `alembic upgrade head` will try to `CREATE TABLE daily_ohlcv` and fail. Also verify the existing table has a `fetched_at` column (added in the new model); if missing, add an `ALTER TABLE` migration before stamping.
 
 ### Phase 4 — Fold in `descriptions/`
 - Move `descriptions/populate_db.py` into `findata/sources/corporate/` (the yfinance-profile loader).
