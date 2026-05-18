@@ -122,68 +122,10 @@ class StockDatabase:
         MySQL      : mysql+pymysql://user:pass@host/dbname
     """
 
-    CREATE_TABLE_SQL = text("""
-        CREATE TABLE IF NOT EXISTS daily_ohlcv (
-            ticker  VARCHAR(10)    NOT NULL,
-            date    DATE           NOT NULL,
-            open    NUMERIC(12,4),
-            high    NUMERIC(12,4),
-            low     NUMERIC(12,4),
-            close   NUMERIC(12,4),
-            volume  BIGINT,
-            PRIMARY KEY (ticker, date)
-        )
-    """)
-
     def __init__(self, db_url: str):
         self.db_url = db_url
         self.engine: Engine | None = None
 
-    def ensure_database(self) -> None:
-        """
-        Step 2a: Create the target database if it does not already exist.
-
-        Parses the DATABASE_URL to extract the database name, then connects to the
-        server's default 'postgres' database to check for (and optionally
-        create) the target. This step is only relevant for PostgreSQL; for
-        SQLite the file is created automatically, and for other backends the
-        database must already exist.
-        """
-        url = make_url(self.db_url)
-
-        # Only PostgreSQL needs explicit database creation.
-        if url.get_backend_name() != "postgresql":
-            return
-
-        db_name = url.database
-        if not db_name:
-            return
-
-        # Connect to the default 'postgres' database to issue CREATE DATABASE.
-        admin_url = url.set(database="postgres")
-
-        try:
-            admin_engine = create_engine(admin_url, isolation_level="AUTOCOMMIT")
-            with admin_engine.connect() as conn:
-                exists = conn.execute(
-                    text("SELECT 1 FROM pg_database WHERE datname = :name"),
-                    {"name": db_name},
-                ).scalar()
-
-                if not exists:
-                    # Database names can't be parameterised; validate to prevent injection.
-                    if not db_name.isidentifier():
-                        raise ValueError(f"Invalid database name: {db_name!r}")
-                    conn.execute(text(f'CREATE DATABASE "{db_name}"'))
-                    _logger.info("Created database '%s'", db_name)
-                else:
-                    _logger.debug("Database '%s' already exists", db_name)
-        except Exception as exc:
-            raise RuntimeError(
-                f"Could not connect to PostgreSQL to ensure database exists: {exc}"
-            ) from exc
-        finally:
-            admin_engine.dispose()
 
     def connect(self) -> None:
         """
