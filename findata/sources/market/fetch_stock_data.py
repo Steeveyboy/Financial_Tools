@@ -2,50 +2,38 @@
 fetch_stock_data.py
 
 Fetches daily OHLCV (Open, High, Low, Close, Volume) stock market data
-from Yahoo Finance and inserts it into a database via SQLAlchemy.
+from Yahoo Finance and inserts it into the daily_ohlcv table.
 
-Configuration (environment variables):
-    DATABASE_URL - SQLAlchemy connection string (required)
-                   Examples:
-                     postgresql://user:pass@localhost:5432/market_data
-                     sqlite:///market_data.db
-                     mysql+pymysql://user:pass@localhost/market_data
-    START_DATE   - Default start date (YYYY-MM-DD), fallback: 2015-01-01
-    END_DATE     - Default end date   (YYYY-MM-DD), fallback: today
+The table is defined by the ORM model findata.models.DailyOHLCV and
+created by Alembic — this script no longer issues any DDL. The database
+connection is sourced from findata.db.session.get_engine(), which reads
+DATABASE_URL via findata.config.
 
-Usage:
-    export DATABASE_URL="postgresql://user:pass@localhost:5432/market_data"
-    python fetch_stock_data.py AAPL MSFT GOOG
-    python fetch_stock_data.py AAPL --start 2024-01-01
-    python fetch_stock_data.py tickers.json --mode truncate
+Usage (run from the repo root):
+    python -m findata.sources.market.fetch_stock_data AAPL MSFT GOOG
+    python -m findata.sources.market.fetch_stock_data AAPL --start 2024-01-01
+    python -m findata.sources.market.fetch_stock_data tickers.json --mode truncate
 """
 
 import argparse
 import json
 import logging
 import os
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 import pandas as pd
 import yfinance as yf
-from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
+
+from sqlalchemy import text, select, delete
 from sqlalchemy.engine import Engine
-from sqlalchemy.engine.url import make_url
 from tqdm import tqdm
+from findata.db.session import get_engine
+from findata.models import DailyOHLCV
 
 
-load_dotenv()  # Load environment variables from .env file if present
 
 _logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Configuration helpers
-# ---------------------------------------------------------------------------
-
-def _env(key: str, default: str | None = None) -> str | None:
-    """Return an environment variable value, falling back to a default."""
-    return os.environ.get(key, default)
 
 
 # ---------------------------------------------------------------------------
@@ -122,32 +110,8 @@ class StockDatabase:
         MySQL      : mysql+pymysql://user:pass@host/dbname
     """
 
-    def __init__(self, db_url: str):
-        self.db_url = db_url
-        self.engine: Engine | None = None
-
-
-    def connect(self) -> None:
-        """
-        Step 2b: Create a SQLAlchemy engine for the configured database URL.
-
-        The engine manages a connection pool automatically; no explicit
-        connect/disconnect calls are needed for individual queries.
-        """
-        _logger.info("Connecting to database...")
-        self.engine = create_engine(self.db_url)
-        _logger.debug("Engine ready (%s)", self.engine.dialect.name)
-
-    def ensure_table(self) -> None:
-        """
-        Step 2c: Create the daily_ohlcv table if it does not already exist.
-
-        The table's composite primary key (ticker, date) guarantees at most
-        one OHLCV row per ticker per trading day.
-        """
-        with self.engine.begin() as conn:
-            conn.execute(self.CREATE_TABLE_SQL)
-        _logger.debug("Table daily_ohlcv is ready")
+    def __init__(self, engine: Engine):
+        self.engine: Engine = engine
 
     def truncate_table(self) -> None:
         """
@@ -160,7 +124,9 @@ class StockDatabase:
         (SQLite does not support TRUNCATE).
         """
         with self.engine.begin() as conn:
-            conn.execute(text("DELETE FROM daily_ohlcv"))
+            
+            statement = delete(DailyOHLCV)
+            conn.execute(statement)
         _logger.info("Truncated daily_ohlcv — all existing rows removed")
 
     def insert(self, df: pd.DataFrame) -> None:
@@ -198,16 +164,12 @@ class StockDatabase:
 
     def _existing_dates(self, ticker: str) -> set[date]:
         """Return the set of dates already stored for a given ticker."""
-        query = text("SELECT date FROM daily_ohlcv WHERE ticker = :ticker")
+        
+        statement = select(DailyOHLCV.date).where(DailyOHLCV.ticker == ticker)
+        
         with self.engine.connect() as conn:
-            result = conn.execute(query, {"ticker": ticker})
+            result = conn.execute(statement)
             return {row[0] for row in result}
-
-    def dispose(self) -> None:
-        """Release all database connections in the engine's pool."""
-        if self.engine:
-            self.engine.dispose()
-            _logger.debug("Database connections released")
 
 
 def parse_tickers(filename: str) -> list[str]:
@@ -219,7 +181,7 @@ def parse_tickers(filename: str) -> list[str]:
         [{"Ticker": "AAPL", "Company": "Apple Inc.", ...}, ...]
 
     Args:
-        filename: Path to the JSON file.
+        filename: Path to the JSON file. If not absolute, looks in the same directory as this file.
 
     Returns:
         A list of ticker symbol strings.
@@ -227,6 +189,9 @@ def parse_tickers(filename: str) -> list[str]:
     Raises:
         SystemExit: If the file is missing, not valid JSON, or missing "Ticker" keys.
     """
+    if not os.path.isabs(filename):
+        filename = os.path.join(os.path.dirname(__file__), filename)
+    
     try:
         with open(filename, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -249,6 +214,43 @@ def parse_tickers(filename: str) -> list[str]:
     return tickers
 
 
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Fetch daily OHLCV stock data and store via SQLAlchemy",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "tickers",
+        nargs="+",
+        help="Ticker symbols (e.g. AAPL MSFT) or a path to a JSON file of tickers",
+    )
+    parser.add_argument(
+        "--start",
+        default=(datetime.now() - timedelta(days=(365*10))).strftime("%Y-%m-%d"),
+        help="Start date YYYY-MM-DD (default: 10 years ago)",
+    )
+    parser.add_argument(
+        "--end",
+        default=datetime.now().strftime("%Y-%m-%d"),
+        help="End date YYYY-MM-DD (default: today)",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["append", "truncate"],
+        default="append",
+        help=(
+            "append: add new rows, skip existing dates (default).  "
+            "truncate: delete all rows before loading."
+        ),
+    )
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Enable debug-level logging",
+    )
+    return parser.parse_args()
+
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
@@ -268,49 +270,8 @@ def main():
     # DATABASE_URL is read exclusively from the environment to keep
     # credentials out of shell history.
     # ----------------------------------------------------------------
-    db_url = _env("DATABASE_URL")
-    if not db_url:
-        _logger.error(
-            "DATABASE_URL environment variable is not set.\n"
-            "Set it before running:\n"
-            '  export DATABASE_URL="sqlite:///market_data.db"'
-        )
-        raise SystemExit(1)
 
-    parser = argparse.ArgumentParser(
-        description="Fetch daily OHLCV stock data and store via SQLAlchemy",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    parser.add_argument(
-        "tickers",
-        nargs="+",
-        help="Ticker symbols (e.g. AAPL MSFT) or a path to a JSON file of tickers",
-    )
-    parser.add_argument(
-        "--start",
-        default=_env("START_DATE", "2015-01-01"),
-        help="Start date YYYY-MM-DD  [env: START_DATE]",
-    )
-    parser.add_argument(
-        "--end",
-        default=_env("END_DATE", datetime.now().strftime("%Y-%m-%d")),
-        help="End date YYYY-MM-DD    [env: END_DATE]",
-    )
-    parser.add_argument(
-        "--mode",
-        choices=["append", "truncate"],
-        default="append",
-        help=(
-            "append: add new rows, skip existing dates (default).  "
-            "truncate: delete all rows before loading."
-        ),
-    )
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Enable debug-level logging",
-    )
-    args = parser.parse_args()
+    args = parse_args()
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -323,10 +284,7 @@ def main():
     # ----------------------------------------------------------------
     # Steps 2a–2c: Ensure database exists, connect, and prepare table.
     # ----------------------------------------------------------------
-    db = StockDatabase(db_url)
-    db.ensure_database()
-    db.connect()
-    db.ensure_table()
+    db = StockDatabase(get_engine())
 
     if args.mode == "truncate":
         db.truncate_table()
@@ -337,21 +295,18 @@ def main():
     # ----------------------------------------------------------------
     failed: list[str] = []
 
-    try:
-        for ticker in tqdm(args.tickers, desc="Fetching tickers", unit="ticker"):
-            try:
-                fetcher = StockDataFetcher(ticker, args.start, args.end)
-                df = fetcher.fetch()
+    for ticker in tqdm(args.tickers, desc="Fetching tickers", unit="ticker"):
+        try:
+            fetcher = StockDataFetcher(ticker, args.start, args.end)
+            df = fetcher.fetch()
 
-                if df.empty:
-                    continue
+            if df.empty:
+                continue
 
-                db.insert(df)
-            except Exception as exc:
-                _logger.error("[%s] Unexpected error — skipping: %s", ticker, exc)
-                failed.append(ticker)
-    finally:
-        db.dispose()
+            db.insert(df)
+        except Exception as exc:
+            _logger.error("[%s] Unexpected error — skipping: %s", ticker, exc)
+            failed.append(ticker)
 
     if failed:
         _logger.warning(
