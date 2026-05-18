@@ -1,0 +1,16 @@
+"""
+findata.models package.
+
+Importing this package makes all ORM models available and ensures that
+Alembic's autogenerate feature can discover them via ``Base.metadata``.
+"""
+
+from findata.db.base import Base
+from .exchange import Exchange
+from .company import Company
+from .insider import Insider
+from .article import Article
+from .article_ticker import ArticleTicker
+from .daily_ohlcv import DailyOHLCV
+
+__all__ = ["Base", "Exchange", "Company", "Insider", "Article", "ArticleTicker", "DailyOHLCV"]

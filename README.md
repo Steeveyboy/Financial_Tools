@@ -1,31 +1,67 @@
-# Financial Tools
+# Financial Tools — Resonance Desk
 
-A collection of Python-based tools for financial analysis, including web scrapers, sentiment analysis, and data exploration notebooks.
+A Python project building a single Postgres-backed financial data warehouse that combines:
 
-## Projects
+- **Timeseries market pricing** (daily OHLCV)
+- **Company information** (profiles, exchanges, sector / industry / classification)
+- **Timeseries news** (Reuters RSS + FNSPID historical dataset)
+- **SEC filings** (XBRL income-statement data — currently MongoDB, migrating to Postgres)
 
-| Project | Description | Tech Stack |
-|---------|-------------|------------|
-| [Sentiment Analysis](SentimentAnalysis/) | Flask web app that scrapes news articles and runs sentiment analysis on them using a trained NLP model | Python, Flask, NLTK, scikit-learn |
-| [Financial Web Scrapers](FinancialWebScrapers/) | Scripts and notebooks for scraping SEC EDGAR filings, company facts, and financial data | Python, Requests, Pydantic, MongoDB |
-| [S&P 500 Analysis](SP500_Analysis/) | Jupyter notebooks for analyzing S&P 500 fundamentals and stock data | Python, Pandas, Matplotlib, yfinance |
-| [Description Parsing](descriptions/) | Notebooks for parsing and searching NYSE stock descriptions | Python, yfinance, Pandas |
+The repository is mid-consolidation. See [`docs/CLEANUP_PLAN.md`](docs/CLEANUP_PLAN.md) for the target structure (one `findata/` package, one ORM `Base`, one Alembic history) and the phased rollout.
 
-## Getting Started
+## Current modules
 
-Each project has its own setup. See the individual project READMEs linked above for installation and usage instructions.
+| Module | Role | Storage | Notes |
+|---|---|---|---|
+| [`news_articles/`](news_articles/) | News ETL pipeline — RSS + FNSPID extractors, sentiment transformer | Postgres / SQLite | Tables: `articles`, `article_tickers` |
+| [`findata/`](findata/) | Warehouse package — ORM `Base`, models, Alembic. Currently holds the corporate tables | Postgres / SQLite | Tables: `exchanges`, `companies`, `insiders`. SQLAlchemy 2.0 ORM + Alembic |
+| [`market_data/`](market_data/) | Daily OHLCV loader (yfinance) | Postgres / SQLite | Table: `daily_ohlcv` |
+| [`descriptions/`](descriptions/) | yfinance profile loader that populates `findata` | (writes to findata) | `populate_db.py` |
+| [`FinancialWebScrapers/`](FinancialWebScrapers/) | SEC EDGAR / XBRL scrapers | MongoDB | Will migrate to Postgres in cleanup Phase 6 |
+| [`SentimentAnalysis/`](SentimentAnalysis/) | Legacy Flask demo app | none | Kept functional; will move to `legacy/` in cleanup Phase 5 |
+| [`notebooks/`](notebooks/) | Exploratory Jupyter notebooks | — | Throwaway exploration, not imported by pipeline code |
 
-### Prerequisites
+## Setup
 
-- Python 3.8+
-- pip
+```bash
+# from repo root
+python -m venv .venv && source .venv/bin/activate
+pip install -r news_articles/requirements.txt \
+            -r market_data/requirements.txt \
+            -r findata/requirements.txt
 
-## Repository Structure
+cp .env.example .env
+# edit .env to set DATABASE_URL
+```
+
+## Running the pipelines
+
+```bash
+make help                                # list available targets
+
+make news                                # RSS news extraction
+make news-fnspid TICKERS="AAPL MSFT"     # FNSPID historical news
+make market-data TICKERS="AAPL MSFT"     # daily OHLCV
+make corporate-db                        # init / seed corporate schema (python -m findata)
+alembic upgrade head                     # apply DB migrations (the production path)
+make sentiment                           # legacy Flask app (port 5151)
+```
+
+`DATABASE_URL` must be set in `.env` or the shell environment before any pipeline runs. PostgreSQL and SQLite are both supported.
+
+## Repository structure
 
 ```
 Financial_Tools/
-├── SentimentAnalysis/       # News sentiment analysis web app
-├── FinancialWebScrapers/    # SEC EDGAR scrapers and financial data tools
-├── SP500_Analysis/          # S&P 500 data analysis notebooks
-└── descriptions/            # Stock description parsing notebooks
+├── findata/                # Warehouse package — ORM Base, models, Alembic (see docs/CLEANUP_PLAN.md)
+├── news_articles/          # News ETL pipeline
+├── market_data/            # Daily OHLCV loader
+├── descriptions/           # yfinance profile loader
+├── FinancialWebScrapers/   # SEC EDGAR scrapers (MongoDB, migrating)
+├── SentimentAnalysis/      # Legacy Flask app
+├── notebooks/              # Exploratory notebooks
+├── docs/                   # Plans + generated schema reference
+├── load_news_articles.py   # News ETL entry point
+├── alembic.ini             # Alembic config (points at findata/db/migrations)
+└── Makefile                # Common targets
 ```
