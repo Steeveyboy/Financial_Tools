@@ -59,12 +59,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Run the FNSPID HuggingFace dataset extractor (default: off — slow)",
     )
     parser.add_argument(
-        "--tickers",
-        nargs="+",
-        metavar="TICKER",
-        help="Filter FNSPID to these ticker symbols, e.g. --tickers AAPL MSFT NVDA",
-    )
-    parser.add_argument(
         "--start-date",
         metavar="YYYY-MM-DD",
         help="FNSPID lower date bound (inclusive)",
@@ -103,7 +97,6 @@ def main() -> None:
     if args.fnspid:
         extractors.append(
             FNSPIDExtractor(
-                tickers=args.tickers,
                 start_date=args.start_date,
                 end_date=args.end_date,
                 batch_size=args.batch_size,

@@ -88,8 +88,11 @@ class ExtractionPipeline:
 
         for batch in extractor.extract_batches():
             batch = extractor._tag_source(batch)
-            inserted += self.repo.insert_articles(batch)
-            self._link_known_tickers(batch)
+            num_inserted = self.repo.insert_articles(batch)
+            if num_inserted:
+                self._link_known_tickers(batch)
+            inserted += num_inserted
+            
 
         return inserted
 

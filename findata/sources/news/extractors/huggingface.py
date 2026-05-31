@@ -170,7 +170,7 @@ class FNSPIDExtractor(ArticleExtractor):
             "title":             row.get("Article_title"),
             "author":            row.get("Author"),
             "publisher":         row.get("Publisher"),
-            "content":           None,
+            "content":           row.get("Article", None),
             "published_at":      _parse_date(published_date),
             "mentioned_tickers": [ticker] if ticker else [],
         }

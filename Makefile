@@ -20,8 +20,7 @@ news:
 
 # Usage: make news-fnspid TICKERS="AAPL MSFT" [ARGS="--start-date 2020-01-01"]
 news-fnspid:
-	@test -n "$(TICKERS)" || (echo "Error: TICKERS is required. Usage: make news-fnspid TICKERS='AAPL MSFT'" && exit 1)
-	python load_news_articles.py --fnspid --tickers $(TICKERS) $(ARGS)
+	python load_news_articles.py --fnspid
 
 # ── Market data ──────────────────────────────────────────────────────────────
 
