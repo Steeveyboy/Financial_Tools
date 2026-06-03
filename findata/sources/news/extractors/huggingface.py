@@ -35,7 +35,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterator
 from datetime import datetime, timezone
-
+import time
 from tqdm import tqdm
 
 from .base import ArticleExtractor
@@ -123,20 +123,21 @@ class FNSPIDExtractor(ArticleExtractor):
             self.batch_size,
         )
 
-        dataset = load_dataset(DATASET_NAME, split=self.split, streaming=True)
+        dataset = load_dataset(DATASET_NAME, split=self.split, streaming=False)
 
         batch: list[dict] = []
         kept = 0
         skipped = 0
 
-        # progress = tqdm(
-        #     dataset,
-        #     desc="FNSPID",
-        #     unit=" rows",
-        #     bar_format="{desc}: {n_fmt} scanned | {rate_fmt} | kept {postfix[kept]} | skipped {postfix[skipped]}",
-        #     postfix={"kept": 0, "skipped": 0},
-        # )
+        progress = tqdm(
+            dataset,
+            desc="FNSPID",
+            unit=" rows",
+            bar_format="{desc}: {n_fmt} scanned | {rate_fmt} | kept {postfix[kept]} | skipped {postfix[skipped]}",
+            postfix={"kept": 0, "skipped": 0},
+        )
 
+        start_time = time.time()
         for row in dataset:
             article = self._normalise(row)
             if article is None or not self._passes_filters(article):
@@ -147,7 +148,9 @@ class FNSPIDExtractor(ArticleExtractor):
             kept += 1
 
             if len(batch) >= self.batch_size:
+                _logger.info("Batch ready: %d articles (%.3f seconds)", len(batch), time.time() - start_time)
                 yield batch
+                start_time = time.time()
                 batch = []
 
         if batch:
