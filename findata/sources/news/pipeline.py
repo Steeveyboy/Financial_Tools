@@ -44,6 +44,8 @@ from .db.repository import ArticleRepository
 from .extractors.base import ArticleExtractor
 from .transformers.base import ArticleTransformer
 
+import time
+
 _logger = logging.getLogger(__name__)
 
 
@@ -87,10 +89,14 @@ class ExtractionPipeline:
         inserted = 0
 
         for batch in extractor.extract_batches():
+            start_time = time.time()
             batch = extractor._tag_source(batch)
             num_inserted = self.repo.insert_articles(batch)
+            
+            
             if num_inserted:
                 self._link_known_tickers(batch)
+            _logger.info("Batch processed: %d articles (%.3f seconds)", len(batch), time.time() - start_time)
             inserted += num_inserted
             
 
