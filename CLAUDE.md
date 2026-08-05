@@ -8,6 +8,16 @@ This is a Python repository being consolidated into a single Postgres-backed fin
 
 Today the repo is mid-migration: several modules still write to the same `DATABASE_URL` with different ORM idioms. The active development focus is the news source under `findata/sources/news/`.
 
+## Current Priorities (set 2026-08, overrides REPO_REVIEW.md sequencing)
+
+The repo is a portfolio piece first. Work in this order:
+
+1. **Make something run / show** — the demo app lives in a separate repo, [Resonance-Desk](https://github.com/Steeveyboy/resonance-desk) (Streamlit + LLM agents); this repo is the backend engine powering it. Here, "something to show a recruiter" means the README (engine positioning, architecture diagram, "what this demonstrates") and visible proof the pipelines run.
+2. **The interesting half** — sentiment transform end-to-end (REPO_REVIEW #6): migration `0004` (`sentiment_score`, `transform_log`), FinBERT scoring, `_persist()` branch, `transform_news.py` entry point. Then add the sentiment overlay to the demo.
+3. **Tests + honest CI** (REPO_REVIEW #1): remove the `|| echo` escape in CI, pytest against in-memory SQLite.
+
+Small P0 bug fixes (REPO_REVIEW #3–#5) can ride along with whichever item touches their code.
+
 ## Projects
 
 | Directory | Role | Storage | Key Tech |
