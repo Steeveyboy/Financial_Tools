@@ -27,7 +27,7 @@ news-fnspid:
 # Usage: make market-data TICKERS="AAPL MSFT" [ARGS="--mode append"]
 market-data:
 	@test -n "$(TICKERS)" || (echo "Error: TICKERS is required. Usage: make market-data TICKERS='AAPL MSFT'" && exit 1)
-	cd market_data && python fetch_stock_data.py $(TICKERS) $(ARGS)
+	python -m findata.sources.market.fetch_stock_data $(TICKERS) $(ARGS)
 
 # ── Corporate DB ─────────────────────────────────────────────────────────────
 
