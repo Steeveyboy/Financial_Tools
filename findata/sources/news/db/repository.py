@@ -40,6 +40,8 @@ from sqlalchemy.orm import Session, sessionmaker
 from findata.db.session import get_engine
 from findata.models import Article, ArticleTicker, Base
 
+import time
+
 _logger = logging.getLogger(__name__)
 
 # Valid column names for the articles table — used to strip extra keys
@@ -72,8 +74,8 @@ class ArticleRepository:
         self.engine: Engine = engine if engine is not None else get_engine()
         self._SessionFactory: sessionmaker = sessionmaker(
             bind=self.engine,
-            autoflush=False,
-            expire_on_commit=False,
+            autoflush=True,
+            expire_on_commit=True,
         )
 
     # ------------------------------------------------------------------
@@ -129,6 +131,8 @@ class ArticleRepository:
         Returns:
             Number of rows actually inserted (duplicates excluded).
         """
+        
+        start_time = time.time()
         if not rows:
             return 0
 
@@ -159,12 +163,14 @@ class ArticleRepository:
         with self._session() as session:
             session.execute(insert(Article), clean_rows)
             session.commit()
+            end_time = time.time()
 
         skipped = len(rows) - len(to_insert)
         _logger.info(
-            "Inserted %d articles%s",
+            "Inserted %d articles",
             len(to_insert),
             f" (skipped {skipped} duplicates)" if skipped else "",
+            f" (%.3f seconds)" % (end_time - start_time),
         )
         return len(to_insert)
 
