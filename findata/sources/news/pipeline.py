@@ -140,40 +140,108 @@ class TransformationPipeline:
         transformers: Ordered list of ArticleTransformer instances to apply.
     """
 
+    #: Articles loaded from the database per transform iteration. Bounds peak
+    #: memory and, because each batch is logged to transform_log before the
+    #: next is fetched, caps how much work an interrupted run loses.
+    DEFAULT_BATCH_SIZE = 500
+
     def __init__(self, engine: Engine, transformers: list[ArticleTransformer]):
         self.repo = ArticleRepository(engine)
         self.transformers = transformers
 
-    def run(self, transform_name: str | None = None) -> None:
+    def run(
+        self,
+        transform_name: str | None = None,
+        batch_size: int = DEFAULT_BATCH_SIZE,
+        max_articles: int | None = None,
+    ) -> int:
         """
         Apply all (or one) transformer(s) to unprocessed articles.
+
+        Each transformer pages through the articles it hasn't seen, in batches,
+        persisting and logging each batch before fetching the next. A run that
+        is interrupted resumes where it stopped — nothing already logged to
+        ``transform_log`` is rescored.
 
         Args:
             transform_name: If provided, only run the transformer with this
                             transform_id. Useful for re-running a single step.
+            batch_size:     Articles loaded and scored per iteration.
+            max_articles:   Stop after processing this many articles per
+                            transformer. Useful for smoke tests against a
+                            large table; ``None`` processes everything.
+
+        Returns:
+            Total number of articles processed across all transformers.
         """
         targets = self.transformers
         if transform_name:
             targets = [t for t in self.transformers if t.transform_id == transform_name]
             if not targets:
                 _logger.error("No transformer found with id '%s'", transform_name)
-                return
+                return 0
 
+        total = 0
         for transformer in targets:
-            _logger.info("Running transformer: %s", transformer.transform_id)
-            try:
-                articles = self.repo.get_untransformed(transformer.transform_id)
-                if not articles:
-                    _logger.info("No articles to transform for '%s'", transformer.transform_id)
-                    continue
+            total += self._run_transformer(transformer, batch_size, max_articles)
+        return total
 
+    def _run_transformer(
+        self,
+        transformer: ArticleTransformer,
+        batch_size: int,
+        max_articles: int | None,
+    ) -> int:
+        """Page a single transformer over its untransformed articles."""
+        tid = transformer.transform_id
+        remaining = self.repo.count_untransformed(tid)
+        _logger.info("Running transformer '%s' — %d article(s) pending", tid, remaining)
+
+        processed = 0
+        while True:
+            if max_articles is not None:
+                if processed >= max_articles:
+                    break
+                batch_size = min(batch_size, max_articles - processed)
+
+            articles = self.repo.get_untransformed(tid, limit=batch_size)
+            if not articles:
+                break
+
+            start = time.time()
+            try:
                 enriched = transformer.transform(articles)
                 self._persist(transformer, enriched)
-
             except Exception as exc:
+                # Deliberately not logged to transform_log: an unhandled
+                # failure means we don't know what was applied, so the batch
+                # stays pending and the next run retries it.
                 _logger.error(
-                    "Transformer '%s' failed: %s", transformer.transform_id, exc
+                    "Transformer '%s' failed on batch of %d: %s",
+                    tid,
+                    len(articles),
+                    exc,
+                    exc_info=True,
                 )
+                return processed
+
+            self.repo.mark_transformed([a["id"] for a in articles], tid)
+
+            processed += len(articles)
+            _logger.info(
+                "'%s' — %d/%d articles (%.2fs for this batch)",
+                tid,
+                processed,
+                remaining,
+                time.time() - start,
+            )
+
+            # A short final batch means the pending set is exhausted.
+            if len(articles) < batch_size:
+                break
+
+        _logger.info("Transformer '%s' complete — %d article(s) processed", tid, processed)
+        return processed
 
     def _persist(self, transformer: ArticleTransformer, articles: list[dict]) -> None:
         """
@@ -181,6 +249,10 @@ class TransformationPipeline:
 
         Each transformer produces different output fields, so persistence
         logic is handled per transform_id.
+
+        Callers must not log articles to ``transform_log`` here — the caller
+        does that only after this method returns cleanly, so a failed write
+        leaves the batch pending for the next run.
 
         TODO: As transformers are implemented, add a branch here for each
               transform_id to persist its specific output fields.
@@ -191,7 +263,16 @@ class TransformationPipeline:
                 if tickers:
                     self.repo.link_tickers(article["id"], tickers)
 
-        # TODO: add persistence for sentiment_score and future transforms
+        elif transformer.transform_id == "sentiment":
+            # A None score is written as NULL on purpose: the article had no
+            # usable text. transform_log is what marks it as already seen.
+            self.repo.update_sentiment_scores(
+                [
+                    {"id": a["id"], "sentiment_score": a.get("sentiment_score")}
+                    for a in articles
+                ]
+            )
+
         _logger.debug(
             "Persisted results for transformer '%s' (%d articles)",
             transformer.transform_id,

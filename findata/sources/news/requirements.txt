@@ -14,17 +14,12 @@ lxml~=6.0                # HTML parser backend for BeautifulSoup
 # HuggingFace dataset (FNSPID)
 datasets~=2.20
 
-# Sentiment analysis — uncomment one approach (see transformers/sentiment.py)
-# Option A: reuse existing model from SentimentAnalysis/
-# joblib~=1.5
-# scikit-learn~=1.6
-#
-# Option B: FinBERT (recommended for financial news)
-# torch~=2.0
-# transformers~=4.40
-#
-# Option C: Claude API
-# anthropic~=0.30
+# Sentiment analysis — FinBERT (ProsusAI/finbert), run locally.
+# Weights download on first use and cache under ~/.cache/huggingface.
+# For a CPU-only install, a much smaller torch wheel is available from
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+torch~=2.0
+transformers~=4.40
 
 # Entity extraction — uncomment one approach (see transformers/entity.py)
 # Option A: dictionary lookup — no extra deps

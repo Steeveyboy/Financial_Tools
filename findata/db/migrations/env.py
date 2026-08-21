@@ -43,9 +43,32 @@ from findata.models import (  # noqa: E402, F401
     Insider,
     Article,
     ArticleTicker,
+    TransformLog,
+    DailyOHLCV,
 )
 
 target_metadata = Base.metadata
+
+# ---------------------------------------------------------------------------
+# Objects autogenerate must ignore
+# ---------------------------------------------------------------------------
+# Some DDL is emitted by SQLAlchemy ``after_create`` event listeners rather
+# than declared on a model — see the dialect-conditional full-text search in
+# findata/models/company.py. Autogenerate compares the database against
+# Base.metadata, so it cannot see these objects in the metadata and reports
+# them as "removed", generating a DROP that would silently destroy the search
+# index. Excluding them by name is the fix.
+_EVENT_CREATED_OBJECTS: frozenset[str] = frozenset(
+    {
+        "ix_company_description_fts",  # Postgres GIN index (company.py)
+        "company_fts",                 # SQLite FTS5 virtual table (company.py)
+    }
+)
+
+
+def include_object(object, name, type_, reflected, compare_to) -> bool:  # noqa: A002
+    """Return False for objects autogenerate should leave alone."""
+    return name not in _EVENT_CREATED_OBJECTS
 
 # ---------------------------------------------------------------------------
 # Database URL — prefer environment variable, fall back to alembic.ini
@@ -79,6 +102,7 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         render_as_batch=True,  # required for SQLite ALTER TABLE support
         compare_type=True,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -103,6 +127,7 @@ def run_migrations_online() -> None:
             target_metadata=target_metadata,
             render_as_batch=True,  # required for SQLite ALTER TABLE support
             compare_type=True,
+            include_object=include_object,
         )
 
         with context.begin_transaction():

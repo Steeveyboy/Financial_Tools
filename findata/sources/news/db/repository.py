@@ -29,18 +29,17 @@ methods drive the ORM ``Article`` / ``ArticleTicker`` mappers.
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any, Iterator
 
-from sqlalchemy import insert, select
+from sqlalchemy import func, insert, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from findata.db.session import get_engine
-from findata.models import Article, ArticleTicker, Base
-
-import time
+from findata.models import Article, ArticleTicker, Base, TransformLog
 
 _logger = logging.getLogger(__name__)
 
@@ -63,6 +62,7 @@ def _article_to_dict(a: Article) -> dict[str, Any]:
         "content": a.content,
         "published_at": a.published_at,
         "fetched_at": a.fetched_at,
+        "sentiment_score": a.sentiment_score,
     }
 
 
@@ -74,8 +74,8 @@ class ArticleRepository:
         self.engine: Engine = engine if engine is not None else get_engine()
         self._SessionFactory: sessionmaker = sessionmaker(
             bind=self.engine,
-            autoflush=True,
-            expire_on_commit=True,
+            autoflush=False,
+            expire_on_commit=False,
         )
 
     # ------------------------------------------------------------------
@@ -85,6 +85,19 @@ class ArticleRepository:
     def _session(self) -> Session:
         """Return a fresh ORM session bound to this repository's engine."""
         return self._SessionFactory()
+
+    def _transform_log_insert_stmt(self):
+        """Return a dialect-aware ``INSERT ... ON CONFLICT DO NOTHING`` for
+        :class:`TransformLog`, falling back to a plain insert on dialects
+        that don't support upsert. Lets a partially-failed transform batch be
+        re-run without violating the ``(article_id, transform_id)`` key.
+        """
+        dialect = self.engine.dialect.name
+        if dialect == "postgresql":
+            return pg_insert(TransformLog).on_conflict_do_nothing()
+        if dialect == "sqlite":
+            return sqlite_insert(TransformLog).on_conflict_do_nothing()
+        return insert(TransformLog)
 
     def _article_ticker_insert_stmt(self):
         """Return a dialect-aware ``INSERT ... ON CONFLICT DO NOTHING`` for
@@ -110,7 +123,11 @@ class ArticleRepository:
         """
         Base.metadata.create_all(
             self.engine,
-            tables=[Article.__table__, ArticleTicker.__table__],
+            tables=[
+                Article.__table__,
+                ArticleTicker.__table__,
+                TransformLog.__table__,
+            ],
         )
         _logger.debug("Database tables are ready")
 
@@ -131,8 +148,7 @@ class ArticleRepository:
         Returns:
             Number of rows actually inserted (duplicates excluded).
         """
-        
-        start_time = time.time()
+        start_time = time.perf_counter()
         if not rows:
             return 0
 
@@ -163,14 +179,13 @@ class ArticleRepository:
         with self._session() as session:
             session.execute(insert(Article), clean_rows)
             session.commit()
-            end_time = time.time()
 
         skipped = len(rows) - len(to_insert)
         _logger.info(
-            "Inserted %d articles",
+            "Inserted %d articles%s in %.3fs",
             len(to_insert),
             f" (skipped {skipped} duplicates)" if skipped else "",
-            f" (%.3f seconds)" % (end_time - start_time),
+            time.perf_counter() - start_time,
         )
         return len(to_insert)
 
@@ -226,26 +241,118 @@ class ArticleRepository:
     # Reads
     # ------------------------------------------------------------------
 
-    def get_untransformed(self, transform_name: str) -> list[dict]:
+    def get_untransformed(
+        self, transform_name: str, limit: int | None = None
+    ) -> list[dict]:
         """Return articles that have not yet had a given transform applied.
 
         This enables the transform step to be run independently of extraction —
         new transforms can be applied to the full historical article set.
 
+        Implemented as an anti-join against ``transform_log``: an article is
+        "untransformed" when no ``(article_id, transform_name)`` row exists.
+        Because the log records the *attempt*, articles that legitimately
+        produced no result (empty content, model failure) are not retried on
+        every run.
+
         Args:
             transform_name: Identifier for the transform, e.g. ``"sentiment"``.
+            limit:          Maximum number of articles to return. Transforms
+                            over the full FNSPID set should page through with
+                            a limit rather than loading ~1.9M rows at once.
 
         Returns:
-            List of article dicts.
-
-        TODO: Implement a ``transform_log`` table to track which transforms
-              have been applied to which articles. For now, returns all.
+            List of article dicts, oldest first.
         """
-        _logger.warning(
-            "get_untransformed('%s') is not yet implemented — returning all articles",
-            transform_name,
+        stmt = (
+            select(Article)
+            .outerjoin(
+                TransformLog,
+                (TransformLog.article_id == Article.id)
+                & (TransformLog.transform_id == transform_name),
+            )
+            .where(TransformLog.article_id.is_(None))
+            .order_by(Article.id)
         )
-        return self.get_all()
+        if limit is not None:
+            stmt = stmt.limit(limit)
+
+        with self._session() as session:
+            return [_article_to_dict(a) for a in session.execute(stmt).scalars()]
+
+    def count_untransformed(self, transform_name: str) -> int:
+        """Return how many articles still need *transform_name* applied."""
+        stmt = (
+            select(func.count())
+            .select_from(Article)
+            .outerjoin(
+                TransformLog,
+                (TransformLog.article_id == Article.id)
+                & (TransformLog.transform_id == transform_name),
+            )
+            .where(TransformLog.article_id.is_(None))
+        )
+        with self._session() as session:
+            return session.execute(stmt).scalar_one()
+
+    def mark_transformed(self, article_ids: list[int], transform_name: str) -> None:
+        """Record that *transform_name* has been applied to *article_ids*.
+
+        Safe to call repeatedly — duplicate ``(article_id, transform_id)``
+        pairs are ignored. Call this for every article the transform *saw*,
+        including ones that produced no value, so they aren't reprocessed on
+        the next run.
+
+        Args:
+            article_ids:    The ``articles.id`` values that were processed.
+            transform_name: Identifier for the transform, e.g. ``"sentiment"``.
+        """
+        if not article_ids:
+            return
+
+        rows = [
+            {"article_id": aid, "transform_id": transform_name}
+            for aid in sorted(set(article_ids))
+        ]
+        with self._session() as session:
+            session.execute(self._transform_log_insert_stmt(), rows)
+            session.commit()
+        _logger.debug(
+            "Marked %d articles as transformed by '%s'", len(rows), transform_name
+        )
+
+    def update_sentiment_scores(self, scores: list[dict]) -> int:
+        """Write ``sentiment_score`` values back to the ``articles`` table.
+
+        Args:
+            scores: List of dicts with keys ``id`` and ``sentiment_score``.
+                    A ``None`` score is written as SQL ``NULL`` (the article
+                    had no usable text); pair this with
+                    :meth:`mark_transformed` so it isn't retried.
+
+        Returns:
+            Number of rows submitted for update.
+        """
+        if not scores:
+            return 0
+
+        # ORM "bulk UPDATE by primary key": each dict carries the primary key
+        # plus the columns to set, and SQLAlchemy builds
+        # `UPDATE articles SET sentiment_score=? WHERE id=?` as a single
+        # executemany. Do NOT add an explicit .where() here — that turns it
+        # into a bulk update with additional criteria, which the ORM session
+        # refuses to synchronize.
+        params = [
+            {"id": s["id"], "sentiment_score": s.get("sentiment_score")}
+            for s in scores
+        ]
+
+        with self._session() as session:
+            session.execute(update(Article), params)
+            session.commit()
+
+        _logger.debug("Updated sentiment_score on %d articles", len(params))
+        return len(params)
 
     def get_all(self) -> list[dict]:
         """Return every article as a list of dicts."""
