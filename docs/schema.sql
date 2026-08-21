@@ -1,9 +1,15 @@
 -- =============================================================================
--- findata warehouse schema — PostgreSQL DDL reference
+-- findata warehouse schema — PostgreSQL DDL reference  ⚠ STALE SNAPSHOT
 -- =============================================================================
--- Documents the intended schema in plain SQL (PostgreSQL dialect). For
--- reference / manual use only — all schema changes go through Alembic
--- migrations (findata/db/migrations/, run `alembic upgrade head`).
+-- ⚠ DO NOT TRUST THIS FILE FOR COLUMN LISTS. It is hand-written, nothing
+-- regenerates it, and it is known to lag the real schema (it predates
+-- `daily_ohlcv` and the sentiment columns).
+--
+-- The authoritative schema is the ORM models under findata/models/ plus the
+-- Alembic tree at findata/db/migrations/versions/. See docs/discoveries/003.
+--
+-- Kept only as a human-readable overview of table relationships. All schema
+-- changes go through Alembic (`alembic upgrade head`).
 --
 -- Covers: exchanges, companies, insiders (corporate) and articles,
 -- article_tickers (news). market-data and SEC tables to follow.

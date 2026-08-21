@@ -1,0 +1,15 @@
+# Tooling configuration only — this repo is not packaged/installed.
+# `findata` imports resolve because the repo root is on sys.path; for pytest
+# that is guaranteed by `pythonpath = ["."]` below. See docs/REPO_MAP.md.
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q --tb=short"
+filterwarnings = ["ignore::DeprecationWarning"]
+log_cli_level = "WARNING"
+
+[tool.ruff]
+line-length = 100
+exclude = [".venv", "SentimentAnalysis", "notebooks", "findata/db/migrations/versions"]
