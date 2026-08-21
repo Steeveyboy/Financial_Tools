@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List, Optional, TYPE_CHECKING
 
-from sqlalchemy import DateTime, Index, Integer, String, Text, func
+from sqlalchemy import DateTime, Float, Index, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from findata.db.base import Base
@@ -33,6 +33,13 @@ class Article(Base):
         content:      Full article body text (plain text, no HTML).
         published_at: Publication timestamp reported by the source.
         fetched_at:   Timestamp this row was inserted (set by the DB).
+        sentiment_score:
+                      Signed tone in ``[-1.0, 1.0]`` produced by the
+                      ``sentiment`` transform — ``+1`` strongly positive,
+                      ``-1`` strongly negative, ``0`` neutral. ``NULL`` means
+                      either "not scored yet" or "scored, but the article had
+                      no usable text"; consult ``transform_log`` to tell the
+                      two apart.
         tickers:      Linked ticker associations.
     """
 
@@ -49,6 +56,7 @@ class Article(Base):
     fetched_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now()
     )
+    sentiment_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
     __table_args__ = (
         Index("ix_articles_published_at", "published_at"),
