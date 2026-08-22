@@ -13,7 +13,7 @@ Configuration (via .env or environment):
 
 Usage:
   python load_news_articles.py
-  python load_news_articles.py --fnspid --tickers AAPL MSFT --start-date 2020-01-01
+  python load_news_articles.py --fnspid --TICKERS AAPL MSFT --start-date 2020-01-01
 """
 
 import argparse
