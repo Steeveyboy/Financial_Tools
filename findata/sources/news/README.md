@@ -116,7 +116,7 @@ extractors and runs `ExtractionPipeline`:
 ```bash
 python load_news_articles.py                     # RSS only (default)
 python load_news_articles.py --fnspid \
-    --tickers AAPL MSFT NVDA \
+    --TICKERS AAPL MSFT NVDA \
     --start-date 2020-01-01 --end-date 2023-12-31
 ```
 
