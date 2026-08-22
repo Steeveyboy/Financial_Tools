@@ -12,7 +12,7 @@ Once this transformer runs, ArticleRepository.get_by_ticker() becomes useful.
 Approaches:
     Option A — Dictionary lookup (fast, lower recall)
         Build a lookup from company names → ticker symbols using the tickers.json
-        file already in the repo (market_data/tickers.json). Search article text
+        file already in the repo (findata/sources/market/tickers.json). Search article text
         for company names or ticker symbols. Simple but misses paraphrases.
 
     Option B — spaCy NER (recommended for accuracy)
@@ -56,7 +56,7 @@ class EntityTransformer(ArticleTransformer):
         Extract ticker mentions from each article's content.
 
         TODO:
-            - Load the ticker → company name lookup (from market_data/tickers.json
+            - Load the ticker → company name lookup (from findata/sources/market/tickers.json
               or directly from the daily_ohlcv table)
             - For each article, search content + title for company/ticker mentions
             - Set article["mentioned_tickers"] = list of matched ticker symbols

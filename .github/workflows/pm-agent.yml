@@ -44,7 +44,7 @@ jobs:
 
           ## Your task
 
-          1. **Scan** the codebase for unimplemented stubs. Look in news_articles/ for:
+          1. **Scan** the codebase for unimplemented stubs. Look in findata/sources/news/ for:
              - Methods containing only a TODO comment or a warning log followed by a stub return
              - Grep for: TODO, FIXME, NotImplemented, stub
              Focus on actionable gaps (missing implementations), not cosmetic notes.

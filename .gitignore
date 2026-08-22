@@ -24,3 +24,7 @@ Thumbs.db
 
 # Environment variable files
 .env
+
+# Claude Code — share settings.json, keep local overrides and worktrees out
+.claude/settings.local.json
+.claude/worktrees/

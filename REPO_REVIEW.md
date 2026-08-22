@@ -3,7 +3,7 @@
 Scope: full review of the repository against its stated purpose — a time-series
 financial + news warehouse that **backfills** history and **continuously
 updates**, presentable as a portfolio piece. Each finding is weighed by impact
-and difficulty. Companion to [CLEANUP_PLAN.md](CLEANUP_PLAN.md), which remains
+and difficulty. Companion to [CLEANUP_PLAN.md](docs/CLEANUP_PLAN.md), which remains
 the structural roadmap; this document covers correctness, product gaps, and
 presentation.
 

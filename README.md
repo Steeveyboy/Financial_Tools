@@ -33,6 +33,10 @@ flowchart LR
 
 The repo is mid-consolidation toward a single `findata/` package; [`docs/CLEANUP_PLAN.md`](docs/CLEANUP_PLAN.md) is the structural roadmap and [`REPO_REVIEW.md`](REPO_REVIEW.md) the prioritized findings.
 
+New here — human or agent? [`docs/REPO_MAP.md`](docs/REPO_MAP.md) is the navigation
+source of truth: paths, entry points, and the renamed directories that older docs
+still reference.
+
 ## Current modules
 
 | Module | Role | Storage | Notes |
