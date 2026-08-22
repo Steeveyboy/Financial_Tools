@@ -1,28 +1,34 @@
-# 001 — Nothing is installed: run everything from the repo root
+# 001 — `findata` is not an installed package: run everything from the repo root
 
 - **Verified against:** commit `b675cfb` on 2026-08-21
 - **Applies to:** every entry point, every test run
 
 ## What I found
 
-There is no `pip install -e .` step and no `src/` layout. `findata` is importable
-only because the current working directory is the repo root. The interpreter with
-the dependencies is the in-tree venv at `./.venv/` (Python 3.12) — the system
-`python` does not have SQLAlchemy.
+Dependencies are installed — the working environment is the **miniconda env
+`finance`** (`conda activate finance`). What is *not* installed is this repo's
+own package: there is no `pip install -e .`, no `[project]` table, no
+`setup.py`. So `import findata` resolves only because the repo root happens to
+be on `sys.path`, which in practice means the current working directory is the
+repo root.
 
-`pyproject.toml` sets `pythonpath = ["."]` for pytest, so `python -m pytest`
-resolves `findata` without any `PYTHONPATH` juggling. Ad-hoc scripts still need
-the repo root as cwd.
+For pytest this is guaranteed by `pythonpath = ["."]` in `pyproject.toml`.
+Ad-hoc scripts and `python -m …` invocations still depend on cwd.
+
+Note the in-tree `./.venv/` directory. It is **not** the environment in use;
+don't reach for `.venv/bin/python`.
 
 ## Why it bites
 
 Running an entry point from inside `findata/` or `findata/sources/news/` fails
-with `ModuleNotFoundError: No module named 'findata'`, which reads like a missing
-dependency and sends you off installing things that are already there.
+with `ModuleNotFoundError: No module named 'findata'`. That reads like a missing
+dependency and sends you off installing packages that are already there, or
+pointing at the wrong interpreter.
 
 ## What to do
 
-- Always `cd` to the repo root first.
-- Use the venv interpreter: `.venv/bin/python …` (or activate it).
+- `conda activate finance`, then `cd` to the repo root before running anything.
 - Prefer the `Makefile` targets — they encode the correct invocation.
-- Don't "fix" an import error by adding `sys.path` hacks to source files.
+- Don't "fix" an import error with `sys.path` hacks in source files; fix the cwd.
+- The real fix is packaging the repo (`pip install -e .`) — see
+  `docs/AGENT_HABITAT.md`, "Still worth doing" #1, and REPO_REVIEW #11.
