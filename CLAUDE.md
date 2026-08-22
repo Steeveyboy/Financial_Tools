@@ -8,6 +8,13 @@ This is a Python repository being consolidated into a single Postgres-backed fin
 
 Today the repo is mid-migration: several modules still write to the same `DATABASE_URL` with different ORM idioms. The active development focus is the news source under `findata/sources/news/`.
 
+## How to be a good agent
+
+Avoid running commands that require the users input.
+The user is particular, so focus on writing the code, then provide commands that the user can run, to test the changes by visually reviewing the outputs.
+Refer to the .md files scattered around the repo.
+Write down discoveries you make about the repo in .md files in the docs folder.
+
 ## Current Priorities (set 2026-08, overrides REPO_REVIEW.md sequencing)
 
 The repo is a portfolio piece first. Work in this order:
@@ -70,18 +77,8 @@ The target home for the whole warehouse (see `docs/CLEANUP_PLAN.md`). Structure:
 
 ## SentimentAnalysis
 
-Flask app on port 5151. Data flow: scrapers → `webscraperControl.py` → `model_wraper.analyse_articles()` (adds `sentiment_score` 0–1 column) → `app.py` Jinja2 template.
+You won't be working with SentimentAnalysis/ section of the repo it is a legacy project that remains in the repo.
 
-The sentiment model (`sentiment/sentiment_pipeline.pickle`) loads at import time in `webscraperControl.py`. Run `app.py` from inside `SentimentAnalysis/`.
-
-```bash
-cd SentimentAnalysis
-pip install -r requirements.txt
-python -c "import nltk; nltk.download('stopwords')"  # first time only
-python app.py
-```
-
-`sentiment/model_wraper.preprocess()` lowercases, strips non-alpha chars, and removes NLTK stopwords. Call it before passing text to the model outside the pipeline.
 
 ## SEC / XBRL (Phase 6)
 
