@@ -24,7 +24,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.engine import Engine
 
@@ -196,6 +196,19 @@ class ArticleRepository:
         with self.engine.connect() as conn:
             result = conn.execute(stmt)
             return [dict(row._mapping) for row in result]
+
+    def count_articles(self) -> int:
+        """Return the total number of rows in the articles table."""
+        with self.engine.connect() as conn:
+            return conn.execute(select(func.count()).select_from(articles)).scalar_one()
+
+    def count_unique_publishers(self) -> int:
+        """Return the number of distinct non-null publisher values."""
+        with self.engine.connect() as conn:
+            stmt = select(func.count(func.distinct(articles.c.publisher))).where(
+                articles.c.publisher.isnot(None)
+            )
+            return conn.execute(stmt).scalar_one()
 
     # ------------------------------------------------------------------
     # Internal helpers
