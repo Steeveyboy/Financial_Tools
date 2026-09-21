@@ -408,6 +408,24 @@ class ArticleRepository:
             return session.execute(stmt).scalar_one_or_none()
 
     # ------------------------------------------------------------------
+    # Aggregate statistics
+    # ------------------------------------------------------------------
+
+    def count_articles(self) -> int:
+        """Return the total number of rows in the ``articles`` table."""
+        stmt = select(func.count()).select_from(Article)
+        with self._session() as session:
+            return session.execute(stmt).scalar_one()
+
+    def count_unique_publishers(self) -> int:
+        """Return the number of distinct non-null ``publisher`` values."""
+        stmt = select(func.count(func.distinct(Article.publisher))).where(
+            Article.publisher.isnot(None)
+        )
+        with self._session() as session:
+            return session.execute(stmt).scalar_one()
+
+    # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 

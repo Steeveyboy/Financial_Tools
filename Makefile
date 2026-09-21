@@ -1,4 +1,4 @@
-.PHONY: help news news-fnspid market-data corporate-db sentiment
+.PHONY: help news news-fnspid article-stats market-data corporate-db sentiment
 
 # Default target
 help:
@@ -6,6 +6,7 @@ help:
 	@echo ""
 	@echo "  make news                          Run RSS news extraction (default extractors)"
 	@echo "  make news-fnspid TICKERS='AAPL'    Run FNSPID (HuggingFace) extraction for tickers"
+	@echo "  make article-stats                 Print aggregate statistics for the articles table"
 	@echo "  make market-data TICKERS='AAPL MSFT'  Fetch and store OHLCV data"
 	@echo "  make corporate-db                  Initialise / seed the corporate DB schema"
 	@echo "  make sentiment                     Start the SentimentAnalysis Flask app (port 5151)"
@@ -21,6 +22,9 @@ news:
 # Usage: make news-fnspid TICKERS="AAPL MSFT" [ARGS="--start-date 2020-01-01"]
 news-fnspid:
 	python load_news_articles.py --fnspid
+
+article-stats:
+	python -m findata.sources.news.stats
 
 # ── Market data ──────────────────────────────────────────────────────────────
 
