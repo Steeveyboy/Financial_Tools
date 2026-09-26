@@ -46,6 +46,19 @@ _logger = logging.getLogger(__name__)
 
 DATASET_NAME = "Zihan1004/FNSPID"
 
+_ARTICLE_COLUMNS = [
+    "Date", "Article_title", "Stock_symbol", "Url", "Publisher", "Author",
+    "Article", "Lsa_summary", "Luhn_summary", "Textrank_summary", "Lexrank_summary",
+]
+
+# The two CSVs have different headers (only the nasdaq file carries a pandas
+# index column), so each is loaded with its own schema. The nasdaq file goes
+# first: it has full article bodies, and URL dedup keeps the first insert.
+_DATA_FILES = {
+    "Stock_news/nasdaq_exteral_data.csv": ["Unnamed: 0", *_ARTICLE_COLUMNS],
+    "Stock_news/All_external.csv": _ARTICLE_COLUMNS,
+}
+
 _DATE_FORMATS = [
     "%Y-%m-%d %H:%M:%S",
     "%Y-%m-%d %H:%M:%S%z",
@@ -129,8 +142,6 @@ class FNSPIDExtractor(ArticleExtractor):
         Memory usage stays proportional to batch_size, not dataset size.
         A tqdm progress bar displays scan rate and kept/skipped counts.
         """
-        from datasets import load_dataset
-
         _logger.info(
             "Streaming FNSPID (tickers=%s, start=%s, end=%s, batch_size=%d)",
             list(self.ticker_filter) if self.ticker_filter else "all",
@@ -139,7 +150,7 @@ class FNSPIDExtractor(ArticleExtractor):
             self.batch_size,
         )
 
-        dataset = load_dataset(DATASET_NAME, split=self.split, streaming=False)
+        dataset = self._iter_rows()
 
         batch: list[dict] = []
         kept = 0
@@ -179,6 +190,25 @@ class FNSPIDExtractor(ArticleExtractor):
             yield batch
 
         _logger.info("FNSPID complete: %d kept, %d skipped", kept, skipped)
+
+    def _iter_rows(self) -> Iterator[dict]:
+        """Stream every FNSPID CSV in turn, each with an all-string schema.
+
+        Declaring the schema stops pandas inferring blank columns as float,
+        which crashes on the first text value — see
+        docs/discoveries/006-fnspid-csv-type-inference.md.
+        """
+        from datasets import Features, Value, load_dataset
+
+        for path, columns in _DATA_FILES.items():
+            _logger.info("Streaming FNSPID file: %s", path)
+            yield from load_dataset(
+                DATASET_NAME,
+                data_files=path,
+                split=self.split,
+                streaming=True,
+                features=Features({col: Value("string") for col in columns}),
+            )
 
     def _normalise(self, row: dict) -> dict | None:
         """Map a raw FNSPID row to the articles table schema."""

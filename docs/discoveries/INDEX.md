@@ -10,3 +10,4 @@ See [`README.md`](README.md) for when and how to add one.
 | 003 | [`docs/schema.sql` is stale](003-schema-truth-source.md) | Columns come from `findata/models/`, not from `schema.sql` |
 | 004 | [`insert_articles()` log call is malformed](004-insert-articles-log-call-is-malformed.md) | A "Logging error" traceback after inserts is cosmetic, not a failure |
 | 005 | [Postgres schemas + SQLite; `alembic check` lies](005-schemas-and-sqlite.md) | Schemas collapse via `schema_translate_map`; run `alembic check` on Postgres only, and use `sa.func.now()` not `sa.text("now()")` in migrations |
+| 006 | [FNSPID must be loaded per file with an all-string schema](006-fnspid-csv-type-inference.md) | `ArrowInvalid: Failed to parse string … as a scalar of type double` means pandas guessed a blank column as float; `dtype=str` does not exist in `datasets` 5.x, and the two CSVs have different headers |
