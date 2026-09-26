@@ -149,6 +149,92 @@ Key invariant: **every table is an ORM model under `findata/models/` inheriting 
 
 ## Open items to decide during execution
 - `filings` / `financial_facts` exact column design (Phase 6).
-- Whether `daily_ohlcv.ticker` and `article_tickers.ticker` should become real FKs to `companies` (requires companies to be loaded first — coupling vs. integrity tradeoff).
+- ~~Whether `daily_ohlcv.ticker` and `article_tickers.ticker` should become real FKs to `companies`~~ — **decided 2026-09-25:** yes, but to a `securities` master rather than to `companies`, and deferred to Phase 8 below. The 2026-09 rebuild keeps `symbol` strings.
 - Whether to keep a Makefile or a Python `findata/cli.py` (or both).
 - Fate of `corporate_db/` after Phase 1 — delete vs. keep as a deprecated shim for one release.
+
+---
+
+## Phase 8 — Security master (deferred; **not** part of the rebuild)
+
+Considered during the 2026-09 database rebuild and **deliberately postponed**.
+The rebuild keeps `symbol` strings as the join key. This phase replaces them
+with a surrogate `security_id`.
+
+Resolves the open item above about `ticker` columns becoming real foreign keys:
+the answer is yes, but to a `securities` table rather than to `companies`.
+
+### Why it was deferred
+
+The schema design is not the hard part — the data is. Nothing in the repo today
+can populate a security master, and an empty or half-populated one is worse than
+no master at all: every fact table would carry a nullable FK that is mostly
+`NULL`, so queries would need the join *and* still fall back to symbol matching.
+Deferring keeps the rebuild to changes that can be completed and verified in one
+pass.
+
+### What it adds
+
+- `reference.securities` — surrogate `id` PK, `company_id` FK (nullable: price
+  history usually arrives before issuer data), `exchange_id` FK,
+  `primary_symbol`, `security_type`, `currency`, `isin` / `cusip` / `figi`,
+  `is_active`. `UNIQUE (primary_symbol, exchange_id)`.
+- `reference.security_symbols` — symbol history: `security_id`, `symbol`,
+  `valid_from`, `valid_to` (`NULL` = current), `is_primary`.
+  `UNIQUE (security_id, symbol, valid_from)`, `INDEX (symbol, valid_from)`.
+- `market.daily_bars.security_id` and `news.article_securities.security_id`
+  replace their `symbol` columns as the join key. On `article_securities`, keep
+  the raw `symbol` in the PK and let `security_id` be nullable, so an
+  unresolvable mention is still recorded and can be resolved in place later.
+- `ticker` / `exchange_id` move off `companies` onto `securities` — they were
+  never issuer attributes. An issuer with two share classes becomes two
+  `securities` rows pointing at one `companies` row.
+- Optional `market.daily_bars_by_symbol` view joining `securities` back in, so
+  ad-hoc symbol queries keep their current one-table shape.
+
+### The blocker: there is no way to populate these tables
+
+**This is what has to be solved before the phase can start.** Both tables need
+a source, and the repo has none:
+
+- `findata/sources/market/tickers.json` is a flat symbol list — no exchange, no
+  security type, no identifiers, no history. It can seed `primary_symbol` and
+  nothing else.
+- `descriptions/populate_db.py` writes `companies` and is the only existing
+  issuer loader; it has no instrument-level data.
+- Symbol *history* (`FB` → `META`) exists nowhere in the repo and cannot be
+  derived from the data on hand. Without it, `security_symbols` holds one
+  open-ended row per security and resolution works only for current symbols —
+  which is the structure being correct while the data stays thin.
+
+Candidate sources, cheapest first:
+
+| Source | Gives | Cost |
+|---|---|---|
+| SEC `company_tickers.json` | CIK ↔ ticker ↔ name for US issuers; ties into Phase 6 | Free, one HTTP GET, US-only, no history |
+| `yfinance` `Ticker.info` | Exchange, currency, security type, ISIN per symbol | Free, already a dependency, one call per symbol, unstable field names |
+| OpenFIGI API | FIGI + exchange-level instrument identity, the industry standard mapping | Free, batched, needs a key, no symbol history |
+| Corporate-actions feed (paid) | Actual rename/split/delist history | The only real fix for `security_symbols`; none is free |
+
+Decide the source before designing the loader. Suggested first cut: a
+`load_symbols.py` entry point seeding `exchanges` + `securities` from
+`company_tickers.json` joined to `tickers.json`, with `security_symbols` getting
+one open-ended row per security and the history gap documented rather than
+faked.
+
+### Migration shape
+
+Fact tables will already hold rows keyed by `symbol`, so this is not a
+create-only migration:
+
+1. Create `securities` / `security_symbols`; populate from the chosen source.
+2. Add nullable `security_id` to `daily_bars` and `article_securities`.
+3. Backfill by matching `symbol` → `securities.primary_symbol`; **report the
+   unmatched count rather than dropping rows**.
+4. Only once the unmatched count is acceptable: add the FK constraints, and on
+   `daily_bars` make `security_id` `NOT NULL` and re-key the PK to
+   `(security_id, trade_date)`.
+
+Step 3 is where this phase will actually be won or lost — the backfill match
+rate against ~1.9M article rows and the full bar history is the thing to measure
+first, before any of the DDL above is written.
