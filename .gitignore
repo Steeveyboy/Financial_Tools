@@ -28,3 +28,5 @@ Thumbs.db
 # Claude Code — share settings.json, keep local overrides and worktrees out
 .claude/settings.local.json
 .claude/worktrees/
+
+graphify-out/
