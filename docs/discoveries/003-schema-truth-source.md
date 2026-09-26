@@ -6,8 +6,10 @@
 ## What I found
 
 `docs/schema.sql` is a hand-written snapshot containing only `exchanges`,
-`companies`, `insiders`, `articles`, `article_tickers`. It predates
-`daily_ohlcv` (migration `0003`) and the sentiment work, and nothing regenerates it.
+`companies`, `insiders`, `articles`, `article_tickers`. It predates the 2026-09
+rebuild entirely — the tables it names have since been renamed and moved into
+`reference` / `market` / `news` schemas — and nothing regenerates it. See
+[`../DATA_MODEL.md`](../DATA_MODEL.md) for the current schema.
 
 The authoritative schema is `Base.metadata`, i.e. the model files under
 `findata/models/` plus the Alembic tree under `findata/db/migrations/versions/`.
