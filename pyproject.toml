@@ -1,6 +1,31 @@
-# Tooling configuration only — this repo is not packaged/installed.
-# `findata` imports resolve because the repo root is on sys.path; for pytest
-# that is guaranteed by `pythonpath = ["."]` below. See docs/REPO_MAP.md.
+# Project metadata and tooling configuration.
+# There is deliberately no [build-system]: the package is not built or installed.
+# `findata` imports resolve because the repo root is on sys.path; for pytest that
+# is guaranteed by `pythonpath = ["."]` below. See docs/REPO_MAP.md.
+
+[project]
+name = "findata"
+version = "0.1.0"
+description = "Financial data tools"
+authors = [{ name = "Jonathon Steeves", email = "jonathon.steeves13@gmail.com" }]
+requires-python = ">=3.10"
+dependencies = [
+    "alembic>=1.13",
+    "beautifulsoup4>=4.15.0",
+    "datasets>=5.0.1",
+    "feedparser>=6.0.14",
+    "lxml>=6.1.3",
+    "pandas>=2.3.3",
+    "pandas-datareader>=0.10.0",
+    "psycopg>=3.3.6",
+    "psycopg2-binary>=2.9",
+    "python-dotenv>=1.2.3",
+    "soupsieve>=2.10",
+    "sqlalchemy>=2.0.54",
+    "tqdm>=4.70.1",
+    "yfinance>=1.7.0",
+]
+
 
 [tool.pytest.ini_options]
 minversion = "7.0"
@@ -12,4 +37,14 @@ log_cli_level = "WARNING"
 
 [tool.ruff]
 line-length = 100
-exclude = [".venv", "SentimentAnalysis", "notebooks", "findata/db/migrations/versions"]
+exclude = [".venv", "legacy", "notebooks", "findata/db/migrations/versions"]
+
+[dependency-groups]
+# FinBERT sentiment scoring needs transformers AND torch; neither is required to
+# run extraction or the schema, so both stay out of the runtime dependencies.
+# CPU-only torch is a much smaller wheel:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+dev = [
+    "torch>=2.0",
+    "transformers>=5.17.0",
+]
