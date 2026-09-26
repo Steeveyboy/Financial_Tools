@@ -1,5 +1,6 @@
 .PHONY: help news news-fnspid article-stats market-data corporate-db sentiment
 
+
 # Default target
 help:
 	@echo "Financial Tools — available targets:"
@@ -17,27 +18,26 @@ help:
 # ── News articles ────────────────────────────────────────────────────────────
 
 news:
-	python load_news_articles.py --rss $(ARGS)
+	uv run load_news_articles.py --rss $(ARGS)
 
 # Usage: make news-fnspid TICKERS="AAPL MSFT" [ARGS="--start-date 2020-01-01"]
 news-fnspid:
-	python load_news_articles.py --fnspid
+	uv run python -m load_news_articles --fnspid
 
 article-stats:
-	python -m findata.sources.news.stats
+	uv run python -m findata.sources.news.stats
 
 # ── Market data ──────────────────────────────────────────────────────────────
 
 # Usage: make market-data TICKERS="AAPL MSFT" [ARGS="--mode append"]
+market-data: ARGS ?= --tickers tickers.json --mode append
 market-data:
-	@test -n "$(TICKERS)" || (echo "Error: TICKERS is required. Usage: make market-data TICKERS='AAPL MSFT'" && exit 1)
-	echo $(TICKERS)
-	uv run findata/sources/market/fetch_stock_data.py $(TICKERS) $(ARGS)
+	uv run python -m findata.sources.market.fetch_stock_data $(ARGS)
 
 # ── Corporate DB ─────────────────────────────────────────────────────────────
 
 corporate-db:
-	python -m findata
+	uv run python -m findata
 
 # ── SentimentAnalysis ────────────────────────────────────────────────────────
 

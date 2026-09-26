@@ -207,7 +207,7 @@ class FNSPIDExtractor(ArticleExtractor):
                 DATASET_NAME,
                 data_files=path,
                 split=self.split,
-                streaming=True,
+                streaming=False,
                 features=Features({col: Value("string") for col in columns}),
             )
 
