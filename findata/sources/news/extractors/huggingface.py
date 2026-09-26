@@ -160,9 +160,11 @@ class FNSPIDExtractor(ArticleExtractor):
             dataset,
             desc="FNSPID",
             unit=" rows",
-            bar_format="{desc}: {n_fmt} scanned | {rate_fmt} | kept {postfix[kept]} | skipped {postfix[skipped]}",
-            postfix={"kept": 0, "skipped": 0},
+            # tqdm turns a dict `postfix` into a "k=v, ..." string, so the
+            # counts go through set_postfix() and render via plain {postfix}.
+            bar_format="{desc}: {n_fmt} scanned | {rate_fmt}{postfix}",
         )
+        progress.set_postfix(kept=0, skipped=0, refresh=False)
 
         start_time = time.time()
         # Iterate `progress`, not `dataset`: tqdm only advances the bar for rows
@@ -172,15 +174,14 @@ class FNSPIDExtractor(ArticleExtractor):
             article = self._normalise(row)
             if article is None or not self._passes_filters(article):
                 skipped += 1
-                progress.postfix["skipped"] = skipped
+                progress.set_postfix(kept=kept, skipped=skipped, refresh=False)
                 continue
 
             batch.append(article)
             kept += 1
 
             if len(batch) >= self.batch_size:
-                progress.postfix["kept"] = kept
-                progress.postfix["skipped"] = skipped
+                progress.set_postfix(kept=kept, skipped=skipped, refresh=False)
                 _logger.info("Batch ready: %d articles (%.3f seconds)", len(batch), time.time() - start_time)
                 yield batch
                 start_time = time.time()
