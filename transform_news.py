@@ -6,7 +6,7 @@ database. Extraction (``load_news_articles.py``) and transformation are
 deliberately separate: transforms can be re-run, or applied retroactively to
 the full historical article set, without re-fetching anything.
 
-Progress is recorded per article in ``transform_log``, so an interrupted run
+Progress is recorded per article in ``news.article_transforms``, so an interrupted run
 resumes where it left off rather than rescoring from the start.
 
 Configuration (via .env or environment):
@@ -52,7 +52,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--transform",
         metavar="ID",
-        help="Only run the transformer with this transform_id (e.g. 'sentiment')",
+        help="Only run the transformer with this transform_name (e.g. 'sentiment')",
     )
     parser.add_argument(
         "--batch-size",
@@ -99,8 +99,8 @@ def main() -> None:
         ),
     ]
 
-    if args.transform and not any(t.transform_id == args.transform for t in transformers):
-        available = ", ".join(t.transform_id for t in transformers)
+    if args.transform and not any(t.transform_name == args.transform for t in transformers):
+        available = ", ".join(t.transform_name for t in transformers)
         print(
             f"Error: unknown transform '{args.transform}'. Available: {available}",
             file=sys.stderr,

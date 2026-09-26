@@ -4,7 +4,7 @@ transformers/entity.py
 Entity extraction transformer stub.
 
 Identifies company/ticker mentions in article content and populates the
-article_tickers association table. This is what enables the query:
+news.article_securities association table. This is what enables the query:
 "give me all articles mentioning AAPL, ordered by date".
 
 Once this transformer runs, ArticleRepository.get_by_ticker() becomes useful.
@@ -27,8 +27,8 @@ Approaches:
 To implement:
     1. Choose an approach above
     2. Add required dependencies to requirements.txt
-    3. Fill in `transform()` — populate article["mentioned_tickers"] list
-    4. The pipeline will call repo.link_tickers() with those results
+    3. Fill in `transform()` — populate article["mentioned_symbols"] list
+    4. The pipeline will call repo.link_symbols() with those results
 """
 
 from __future__ import annotations
@@ -44,12 +44,12 @@ class EntityTransformer(ArticleTransformer):
     """
     Identifies ticker symbols mentioned in each article.
 
-    Adds a `mentioned_tickers` field (list[str]) to each article dict.
-    The pipeline passes these to ArticleRepository.link_tickers() to
-    populate the article_tickers table.
+    Adds a `mentioned_symbols` field (list[str]) to each article dict.
+    The pipeline passes these to ArticleRepository.link_symbols() to
+    populate the news.article_securities table.
     """
 
-    transform_id = "entity_extraction"
+    transform_name = "entity_extraction"
 
     def transform(self, articles: list[dict]) -> list[dict]:
         """
@@ -57,9 +57,9 @@ class EntityTransformer(ArticleTransformer):
 
         TODO:
             - Load the ticker → company name lookup (from findata/sources/market/tickers.json
-              or directly from the daily_ohlcv table)
+              or directly from the market.daily_bars table)
             - For each article, search content + title for company/ticker mentions
-            - Set article["mentioned_tickers"] = list of matched ticker symbols
+            - Set article["mentioned_symbols"] = list of matched symbols
             - Handle articles with None content (return empty list)
             - Log a summary: how many unique tickers found across the batch
         """
@@ -67,5 +67,5 @@ class EntityTransformer(ArticleTransformer):
             "EntityTransformer.transform() is not yet implemented — no tickers extracted"
         )
         for article in articles:
-            article["mentioned_tickers"] = []
+            article["mentioned_symbols"] = []
         return articles

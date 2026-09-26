@@ -1,61 +1,42 @@
 """
-Exchange model — represents a stock exchange (NYSE, NASDAQ, TSX, TSXV, …).
+models/exchange.py
 
-Each Exchange has a one-to-many relationship with :class:`~findata.models.company.Company`.
+Trading venues. A small, hand-seeded reference table — see
+``findata.db.session._seed_exchanges``.
 """
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import List, Optional, TYPE_CHECKING
+from typing import List, Optional
 
-from sqlalchemy import DateTime, Integer, String, func
+from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from findata.db.base import Base
-
-if TYPE_CHECKING:
-    from .company import Company
+from findata.db.base import SCHEMA_REFERENCE, Base
+from findata.models.mixins import TimestampMixin
 
 
-class Exchange(Base):
-    """Stock exchange entity.
-
-    Attributes:
-        id:         Auto-incrementing primary key.
-        code:       Short exchange code, e.g. ``NYSE``, ``NASDAQ``, ``TSX``.
-        name:       Full exchange name, e.g. *New York Stock Exchange*.
-        country:    Country where the exchange is domiciled.
-        currency:   Primary trading currency code, e.g. ``USD``, ``CAD``.
-        timezone:   IANA timezone string, e.g. ``America/New_York``.
-        created_at: Record creation timestamp (UTC).
-        updated_at: Last-modified timestamp, auto-updated on every write (UTC).
-        companies:  Back-populated list of companies listed on this exchange.
-    """
+class Exchange(TimestampMixin, Base):
+    """A stock exchange / trading venue."""
 
     __tablename__ = "exchanges"
+    __table_args__ = {"schema": SCHEMA_REFERENCE}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    #: Short venue code — ``NYSE``, ``TSX``. The natural key.
     code: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     country: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+
+    #: Currency the venue trades in.
     currency: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+
+    #: IANA timezone name, e.g. ``America/New_York``. Needed to turn a local
+    #: session time into an instant.
     timezone: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
-    # Relationship — populated lazily by SQLAlchemy
-    companies: Mapped[List["Company"]] = relationship(
+    companies: Mapped[List["Company"]] = relationship(  # noqa: F821
         "Company",
         back_populates="exchange",
         cascade="all, delete-orphan",

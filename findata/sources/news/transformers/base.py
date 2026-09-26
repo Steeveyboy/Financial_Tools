@@ -11,7 +11,7 @@ To add a new transform, subclass ArticleTransformer and implement `transform()`.
 
 Example:
     class MyTransformer(ArticleTransformer):
-        transform_id = "my_transform"
+        transform_name = "my_transform"
 
         def transform(self, articles: list[dict]) -> list[dict]:
             for article in articles:
@@ -33,12 +33,14 @@ class ArticleTransformer(ABC):
     the database directly — they return their results to the pipeline,
     which handles persistence.
 
-    Subclasses must set `transform_id` (used for logging and the future
-    transform_log table) and implement `transform()`.
+    Subclasses must set `transform_name` (recorded in the
+    news.article_transforms table) and implement `transform()`.
     """
 
-    #: Short identifier for this transform, e.g. "sentiment", "entity_extraction".
-    transform_id: str = ""
+    #: Short name for this transform, e.g. "sentiment", "entity_extraction".
+    #: Stored in news.article_transforms.transform_name. It is a name, not an
+    #: integer surrogate key, so it is not a *_id.
+    transform_name: str = ""
 
     @abstractmethod
     def transform(self, articles: list[dict]) -> list[dict]:

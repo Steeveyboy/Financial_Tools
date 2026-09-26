@@ -23,6 +23,7 @@ from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import Session, sessionmaker
 
 from findata.config import DATABASE_URL, ECHO_SQL
+from findata.db.base import ALL_SCHEMAS, schema_translate_map_for
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +77,15 @@ def get_engine() -> Engine:
             cursor.execute("PRAGMA foreign_keys=ON")
             cursor.close()
             logger.debug("SQLite PRAGMAs set: journal_mode=WAL, foreign_keys=ON.")
+
+    # Collapse the logical schemas to the default one on SQLite, which has no
+    # schemas. Every model declares `schema=`, so without this, SQLite would be
+    # asked for `news.articles` and fail. Postgres gets an empty map and is
+    # unaffected. See findata.db.base.schema_translate_map_for().
+    translate_map = schema_translate_map_for(_engine.dialect.name)
+    if translate_map:
+        _engine = _engine.execution_options(schema_translate_map=translate_map)
+        logger.debug("Applied schema_translate_map: %s", translate_map)
 
     logger.info(
         "Engine created — dialect: %s, echo: %s.",
@@ -135,6 +145,25 @@ def get_session() -> Generator[Session, None, None]:
         logger.debug("Session closed (id=%s).", id(session))
 
 
+def create_schemas(engine: Engine) -> None:
+    """Issue ``CREATE SCHEMA IF NOT EXISTS`` for every warehouse schema.
+
+    A no-op on SQLite, which has no schemas — there the logical schemas are
+    collapsed to the default one by the engine's ``schema_translate_map``.
+
+    ``0001_baseline.py`` does the same thing for ``alembic upgrade``; this is
+    only for ``init_db()``.
+    """
+    if engine.dialect.name == "sqlite":
+        logger.debug("SQLite — skipping CREATE SCHEMA.")
+        return
+
+    with engine.begin() as connection:
+        for schema in ALL_SCHEMAS:
+            connection.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{schema}"'))
+    logger.info("Ensured schemas exist: %s", ", ".join(ALL_SCHEMAS))
+
+
 def init_db() -> None:
     """Create all tables defined in ``Base.metadata``.
 
@@ -154,6 +183,7 @@ def init_db() -> None:
     table_names = list(Base.metadata.tables.keys())
     logger.debug("Tables registered on Base.metadata: %s", table_names)
 
+    create_schemas(engine)
     Base.metadata.create_all(engine)
     logger.info(
         "Schema sync complete — %d table(s) ensured: %s.",

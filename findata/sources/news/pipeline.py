@@ -77,7 +77,7 @@ class ExtractionPipeline:
         total_inserted = 0
 
         for extractor in self.extractors:
-            _logger.info("Running extractor: %s", extractor.source_id)
+            _logger.info("Running extractor: %s", extractor.ingest_source)
             inserted = self._run_extractor(extractor)
             total_inserted += inserted
 
@@ -92,39 +92,43 @@ class ExtractionPipeline:
             start_time = time.time()
             batch = extractor._tag_source(batch)
             num_inserted = self.repo.insert_articles(batch)
-            self._link_known_tickers(batch)
+            self._link_known_symbols(batch)
             _logger.info("Batch processed: %d articles (%.3f seconds)", len(batch), time.time() - start_time)
             inserted += num_inserted
             
 
         return inserted
 
-    def _link_known_tickers(self, articles: list[dict]) -> None:
+    def _link_known_symbols(self, articles: list[dict]) -> None:
         """
-        Link tickers to articles when the extractor already knows them.
+        Link symbols to articles when the extractor already supplied them.
 
-        Batches all ID lookups and inserts into two queries per batch
-        rather than 2×N individual queries, which is critical for the
-        FNSPID dataset with millions of rows.
+        Batches all ID lookups and inserts into two queries per batch rather
+        than 2×N individual queries, which is what makes the FNSPID dataset
+        (millions of rows) tractable.
+
+        ``link_source`` is ``extractor``: the feed asserted the symbol, so it is
+        far more reliable than one inferred from article text by the entity
+        transform.
         """
-        articles_with_tickers = [a for a in articles if a.get("mentioned_tickers")]
-        if not articles_with_tickers:
+        with_symbols = [a for a in articles if a.get("mentioned_symbols")]
+        if not with_symbols:
             return
 
         # Fetch all article IDs for this batch in a single query.
-        urls = [a["url"] for a in articles_with_tickers]
+        urls = [a["url"] for a in with_symbols]
         url_to_id = self.repo.get_ids_by_urls(urls)
 
-        # Build all ticker link rows and insert in one operation.
+        # Build all link rows and insert in one operation.
         links = []
-        for article in articles_with_tickers:
+        for article in with_symbols:
             article_id = url_to_id.get(article["url"])
             if article_id is None:
-                continue  # duplicate URL, not inserted
-            for ticker in article["mentioned_tickers"]:
-                links.append({"article_id": article_id, "ticker": ticker})
+                continue  # duplicate or undated URL — not inserted
+            for symbol in article["mentioned_symbols"]:
+                links.append({"article_id": article_id, "symbol": symbol})
 
-        self.repo.bulk_link_tickers(links)
+        self.repo.bulk_link_symbols(links, link_source="extractor")
 
 
 class TransformationPipeline:
@@ -141,7 +145,7 @@ class TransformationPipeline:
     """
 
     #: Articles loaded from the database per transform iteration. Bounds peak
-    #: memory and, because each batch is logged to transform_log before the
+    #: memory and, because each batch is logged to news.article_transforms before the
     #: next is fetched, caps how much work an interrupted run loses.
     DEFAULT_BATCH_SIZE = 500
 
@@ -161,11 +165,11 @@ class TransformationPipeline:
         Each transformer pages through the articles it hasn't seen, in batches,
         persisting and logging each batch before fetching the next. A run that
         is interrupted resumes where it stopped — nothing already logged to
-        ``transform_log`` is rescored.
+        ``news.article_transforms`` is rescored.
 
         Args:
             transform_name: If provided, only run the transformer with this
-                            transform_id. Useful for re-running a single step.
+                            transform_name. Useful for re-running a single step.
             batch_size:     Articles loaded and scored per iteration.
             max_articles:   Stop after processing this many articles per
                             transformer. Useful for smoke tests against a
@@ -176,7 +180,7 @@ class TransformationPipeline:
         """
         targets = self.transformers
         if transform_name:
-            targets = [t for t in self.transformers if t.transform_id == transform_name]
+            targets = [t for t in self.transformers if t.transform_name == transform_name]
             if not targets:
                 _logger.error("No transformer found with id '%s'", transform_name)
                 return 0
@@ -193,7 +197,7 @@ class TransformationPipeline:
         max_articles: int | None,
     ) -> int:
         """Page a single transformer over its untransformed articles."""
-        tid = transformer.transform_id
+        tid = transformer.transform_name
         remaining = self.repo.count_untransformed(tid)
         _logger.info("Running transformer '%s' — %d article(s) pending", tid, remaining)
 
@@ -213,7 +217,7 @@ class TransformationPipeline:
                 enriched = transformer.transform(articles)
                 self._persist(transformer, enriched)
             except Exception as exc:
-                # Deliberately not logged to transform_log: an unhandled
+                # Deliberately not logged to news.article_transforms: an unhandled
                 # failure means we don't know what was applied, so the batch
                 # stays pending and the next run retries it.
                 _logger.error(
@@ -248,24 +252,28 @@ class TransformationPipeline:
         Write transformer results back to the database.
 
         Each transformer produces different output fields, so persistence
-        logic is handled per transform_id.
+        logic is handled per transform_name.
 
-        Callers must not log articles to ``transform_log`` here — the caller
-        does that only after this method returns cleanly, so a failed write
-        leaves the batch pending for the next run.
+        Callers must not log articles to ``news.article_transforms`` here — the
+        caller does that only after this method returns cleanly, so a failed
+        write leaves the batch pending for the next run.
 
         TODO: As transformers are implemented, add a branch here for each
-              transform_id to persist its specific output fields.
+              transform_name to persist its specific output fields.
         """
-        if transformer.transform_id == "entity_extraction":
+        if transformer.transform_name == "entity_extraction":
+            # link_source="entity_transform": inferred from article text, so
+            # materially less reliable than a symbol the feed supplied.
             for article in articles:
-                tickers = article.get("mentioned_tickers", [])
-                if tickers:
-                    self.repo.link_tickers(article["id"], tickers)
+                symbols = article.get("mentioned_symbols", [])
+                if symbols:
+                    self.repo.link_symbols(
+                        article["id"], symbols, link_source="entity_transform"
+                    )
 
-        elif transformer.transform_id == "sentiment":
+        elif transformer.transform_name == "sentiment":
             # A None score is written as NULL on purpose: the article had no
-            # usable text. transform_log is what marks it as already seen.
+            # usable text. news.article_transforms is what marks it as seen.
             self.repo.update_sentiment_scores(
                 [
                     {"id": a["id"], "sentiment_score": a.get("sentiment_score")}
@@ -275,6 +283,6 @@ class TransformationPipeline:
 
         _logger.debug(
             "Persisted results for transformer '%s' (%d articles)",
-            transformer.transform_id,
+            transformer.transform_name,
             len(articles),
         )

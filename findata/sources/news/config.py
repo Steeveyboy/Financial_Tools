@@ -12,7 +12,6 @@ Optional:
     NEWS_LOG_LEVEL - Logging level (default: INFO)
 """
 
-import logging
 import os
 
 from dotenv import load_dotenv

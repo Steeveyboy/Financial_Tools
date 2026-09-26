@@ -5,7 +5,7 @@ Runs the news articles extraction pipeline against the configured database.
 
 Sources:
   - Reuters Business RSS feed (live articles)
-  - FNSPID HuggingFace dataset (historical, filtered by ticker + date range)
+  - FNSPID HuggingFace dataset (historical, filtered by symbol + date range)
 
 Configuration (via .env or environment):
   DATABASE_URL    - SQLAlchemy connection string (required)

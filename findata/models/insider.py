@@ -1,80 +1,56 @@
 """
-Insider model — board member / insider stub for future use (Agent 7).
+models/insider.py
 
-This model is intentionally minimal.  Future agents will extend it with
-additional columns (compensation, share ownership, transaction history, etc.)
-and the corresponding Alembic migrations.
+Board members and insiders associated with an issuer.
 """
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date
 from typing import Optional, TYPE_CHECKING
 
-from sqlalchemy import Boolean, Date, DateTime, Integer, String, func
+from sqlalchemy import Boolean, Date, Integer, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.schema import ForeignKey
 
-from findata.db.base import Base
+from findata.db.base import SCHEMA_REFERENCE, Base
+from findata.models.mixins import TimestampMixin
 
 if TYPE_CHECKING:
     from .company import Company
 
 
-class Insider(Base):
-    """Board member or insider associated with a :class:`~findata.models.company.Company`.
-
-    Attributes:
-        id:             Auto-incrementing primary key.
-        company_id:     FK to :class:`~findata.models.company.Company`.
-        name:           Full legal name.
-        role:           Job title / role, e.g. ``CEO``, ``Director``, ``CFO``.
-        is_board_member: Whether the person sits on the board.
-        is_insider:     Whether the person is classified as a reporting insider.
-        start_date:     Date the role began (nullable).
-        end_date:       Date the role ended (nullable; ``None`` = current).
-        created_at:     Record creation timestamp (UTC).
-        updated_at:     Last-modified timestamp, auto-updated on every write (UTC).
-        company:        Parent company (many-to-one).
-    """
+class Insider(TimestampMixin, Base):
+    """A person with an insider or board relationship to a company."""
 
     __tablename__ = "insiders"
+    __table_args__ = {"schema": SCHEMA_REFERENCE}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
     company_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("companies.id", ondelete="CASCADE"),
+        ForeignKey(f"{SCHEMA_REFERENCE}.companies.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
-    name: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    #: ``full_name`` rather than ``name`` — in any join against ``companies``
+    #: a bare ``name`` column on both sides is ambiguous to read.
+    full_name: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 
     is_board_member: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False, server_default="0"
+        Boolean, nullable=False, default=False, server_default=text("false")
     )
     is_insider: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=True, server_default="1"
+        Boolean, nullable=False, default=True, server_default=text("true")
     )
 
     start_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     end_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
-    # Relationship
     company: Mapped["Company"] = relationship("Company", back_populates="insiders")
 
     def __repr__(self) -> str:
-        return f"<Insider(name={self.name!r}, role={self.role!r})>"
+        return f"<Insider(full_name={self.full_name!r}, role={self.role!r})>"

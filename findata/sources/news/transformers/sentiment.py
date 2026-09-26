@@ -37,7 +37,7 @@ Cost
 FinBERT is a 110M-parameter model. Expect roughly 50–150 articles/second on
 CPU and 10–30x that on GPU — so the full ~1.9M-row FNSPID set is hours of
 compute. The pipeline pages through ``get_untransformed()`` and logs every
-batch to ``transform_log``, so a run can be interrupted and resumed without
+batch to ``news.article_transforms``, so a run can be interrupted and resumed without
 rescoring what it already covered.
 """
 
@@ -73,7 +73,7 @@ class SentimentTransformer(ArticleTransformer):
         device:     ``"cpu"``, ``"cuda"``, or ``None`` to auto-detect.
     """
 
-    transform_id = "sentiment"
+    transform_name = "sentiment"
 
     def __init__(
         self,
@@ -169,7 +169,7 @@ class SentimentTransformer(ArticleTransformer):
         """Score each article and attach ``sentiment_score``.
 
         Articles with no usable text get ``None``. The pipeline still logs
-        them to ``transform_log``, so they are not retried indefinitely.
+        them to ``news.article_transforms``, so they are not retried indefinitely.
 
         Args:
             articles: Article dicts from the repository.

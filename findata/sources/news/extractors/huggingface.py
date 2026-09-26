@@ -34,7 +34,9 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterator
-from datetime import datetime, timezone
+from datetime import datetime
+
+from findata.db.types import ensure_utc
 import time
 from tqdm import tqdm
 
@@ -54,13 +56,18 @@ _DATE_FORMATS = [
 
 
 def _parse_date(date_str: str | None) -> datetime | None:
-    """Parse FNSPID's date string to a naive UTC datetime."""
+    """Parse FNSPID's date string to an **aware** UTC datetime.
+
+    FNSPID publishes no offset, so the value is taken as UTC — see
+    :func:`findata.db.types.ensure_utc`. Returns ``None`` for anything
+    unparseable; the repository drops undated articles at insert time.
+    """
     if not date_str:
         return None
     for fmt in _DATE_FORMATS:
         try:
             dt = datetime.strptime(date_str.strip(), fmt)
-            return dt.replace(tzinfo=timezone.utc)
+            return ensure_utc(dt)
         except ValueError:
             continue
     _logger.debug("Could not parse FNSPID date: %r", date_str)
@@ -79,7 +86,7 @@ class FNSPIDExtractor(ArticleExtractor):
         batch_size: Articles per batch yielded by extract_batches().
     """
 
-    source_id = "huggingface_fnspid"
+    ingest_source = "fnspid"
 
     def __init__(
         self,
@@ -90,8 +97,17 @@ class FNSPIDExtractor(ArticleExtractor):
         batch_size: int = 500,
     ):
         self.ticker_filter: set[str] | None = set(tickers) if tickers else None
-        self.start_date = datetime.strptime(start_date, "%Y-%m-%d") if start_date else None
-        self.end_date   = datetime.strptime(end_date,   "%Y-%m-%d") if end_date   else None
+        # Both bounds MUST be aware: they are compared against `published_at`,
+        # which _parse_date() returns as aware UTC. A bare strptime() here is
+        # naive, and the comparison in _in_date_range() then raises
+        # "can't compare offset-naive and offset-aware datetimes" — the whole of
+        # REPO_REVIEW #3.
+        self.start_date = (
+            ensure_utc(datetime.strptime(start_date, "%Y-%m-%d")) if start_date else None
+        )
+        self.end_date = (
+            ensure_utc(datetime.strptime(end_date, "%Y-%m-%d")) if end_date else None
+        )
         self.split = split
         self.batch_size = batch_size
 
@@ -138,16 +154,22 @@ class FNSPIDExtractor(ArticleExtractor):
         )
 
         start_time = time.time()
-        for row in dataset:
+        # Iterate `progress`, not `dataset`: tqdm only advances the bar for rows
+        # drawn through it. Wrapping the dataset and then looping over the
+        # original meant the bar rendered nothing at all.
+        for row in progress:
             article = self._normalise(row)
             if article is None or not self._passes_filters(article):
                 skipped += 1
+                progress.postfix["skipped"] = skipped
                 continue
 
             batch.append(article)
             kept += 1
 
             if len(batch) >= self.batch_size:
+                progress.postfix["kept"] = kept
+                progress.postfix["skipped"] = skipped
                 _logger.info("Batch ready: %d articles (%.3f seconds)", len(batch), time.time() - start_time)
                 yield batch
                 start_time = time.time()
@@ -175,13 +197,13 @@ class FNSPIDExtractor(ArticleExtractor):
             "publisher":         row.get("Publisher"),
             "content":           row.get("Article", None),
             "published_at":      _parse_date(published_date),
-            "mentioned_tickers": [ticker] if ticker else [],
+            "mentioned_symbols": [ticker] if ticker else [],
         }
 
     def _passes_filters(self, article: dict) -> bool:
         """Return True if the article satisfies all active filters."""
         if self.ticker_filter:
-            tickers = article.get("mentioned_tickers", [])
+            tickers = article.get("mentioned_symbols", [])
             if not any(t in self.ticker_filter for t in tickers):
                 return False
 

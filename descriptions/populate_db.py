@@ -89,7 +89,7 @@ def record_to_company(
     """Map a single yfinance info dict to a Company ORM instance."""
     return Company(
         name=_truncate(rec.get("longName") or rec.get("shortName", ""), 255),
-        ticker=_truncate(rec.get("symbol", ""), 20),
+        symbol=_truncate(rec.get("symbol", ""), 32).upper(),
         exchange_id=exchange_id,
         country=_truncate(rec.get("country"), 100),
         sector=_truncate(rec.get("sector"), 100),
@@ -118,10 +118,10 @@ def populate(path: Path, *, dry_run: bool = False) -> None:
         }
         logger.info("Exchange lookup: %s", exchanges)
 
-        # Build a set of existing (ticker, exchange_id) pairs for fast skip
+        # Build a set of existing (symbol, exchange_id) pairs for fast skip
         existing: set[tuple[str, int]] = set(
             session.execute(
-                select(Company.ticker, Company.exchange_id)
+                select(Company.symbol, Company.exchange_id)
             ).all()
         )
         logger.info("Existing companies in DB: %d", len(existing))
@@ -132,7 +132,10 @@ def populate(path: Path, *, dry_run: bool = False) -> None:
         skipped_no_symbol = 0
 
         for rec in records:
-            symbol = rec.get("symbol")
+            # Normalise exactly as record_to_company() does, or the dedup key
+            # below won't match the keys read back out of the database (which are
+            # stored uppercase and truncated) and every row would look new.
+            symbol = _truncate(rec.get("symbol") or "", 32).upper()
             if not symbol:
                 skipped_no_symbol += 1
                 continue
@@ -153,7 +156,7 @@ def populate(path: Path, *, dry_run: bool = False) -> None:
             company = record_to_company(rec, exchange_id)
 
             if dry_run:
-                logger.info("[DRY RUN] Would insert: %s (%s)", company.ticker, company.name)
+                logger.info("[DRY RUN] Would insert: %s (%s)", company.symbol, company.name)
             else:
                 session.add(company)
                 existing.add(key)

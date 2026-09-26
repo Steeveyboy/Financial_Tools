@@ -22,8 +22,10 @@ Usage:
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from email.utils import parsedate_to_datetime
+
+from findata.db.types import ensure_utc
 
 import feedparser
 from bs4 import BeautifulSoup
@@ -52,27 +54,28 @@ def _strip_html(raw: str | None) -> str | None:
 
 def _parse_date(date_str: str | None) -> datetime | None:
     """
-    Parse an RSS date string to a naive UTC datetime.
+    Parse an RSS date string to an **aware** UTC datetime.
 
-    Tries RFC 2822 first (Google News, most RSS feeds), then falls back
-    to ISO 8601 (Yahoo Finance).
+    Tries RFC 2822 first (Google News, most RSS feeds), then falls back to
+    ISO 8601 (Yahoo Finance). Both paths hand off to
+    :func:`findata.db.types.ensure_utc`, so a feed that supplies an offset keeps
+    its real instant and one that does not is taken as UTC.
+
+    Returns ``None`` for anything unparseable; the repository drops undated
+    articles at insert time rather than failing the batch.
     """
     if not date_str:
         return None
 
     # RFC 2822: "Mon, 06 Apr 2026 04:57:00 GMT"
     try:
-        dt = parsedate_to_datetime(date_str)
-        return dt.astimezone(timezone.utc).replace(tzinfo=None)
+        return ensure_utc(parsedate_to_datetime(date_str))
     except Exception:
         pass
 
     # ISO 8601: "2026-04-06T04:57:00Z" or "2026-04-06T04:57:00+00:00"
     try:
-        dt = datetime.fromisoformat(date_str)
-        if dt.tzinfo is not None:
-            dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
-        return dt
+        return ensure_utc(datetime.fromisoformat(date_str))
     except Exception:
         pass
 
@@ -91,7 +94,7 @@ class RSSExtractor(ArticleExtractor):
         feed_urls: List of RSS feed URLs to poll. Defaults to Reuters Business.
     """
 
-    source_id = "rss"
+    ingest_source = "rss"
 
     def __init__(self, feed_urls: list[str] | None = None):
         self.feed_urls = feed_urls or RSS_FEEDS
@@ -101,7 +104,7 @@ class RSSExtractor(ArticleExtractor):
         Parse all configured feeds and return normalised article dicts.
 
         Each dict contains: url, title, author, publisher, content,
-        published_at. The `source` field is stamped by the pipeline.
+        published_at. The `ingest_source` field is stamped by the pipeline.
 
         Returns:
             List of article dicts across all feeds, deduplicated by URL.

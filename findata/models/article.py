@@ -1,69 +1,59 @@
 """
-Article model — one ingested news article, identified by its URL.
+models/article.py
 
-The URL is the deduplication key (unique). Articles are linked to the tickers
-they mention via :class:`~findata.models.article_ticker.ArticleTicker`
-(many-to-many).
+News articles. Phase 1 (extraction) writes these; Phase 2 (transform) updates
+``sentiment_score`` in place. See ``findata/sources/news/README.md``.
 """
 
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional, TYPE_CHECKING
+from typing import List, Optional
 
-from sqlalchemy import DateTime, Float, Index, Integer, String, Text, func
+from sqlalchemy import Float, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from findata.db.base import Base
-
-if TYPE_CHECKING:
-    from .article_ticker import ArticleTicker
+from findata.db.base import SCHEMA_NEWS, Base
+from findata.models.mixins import UTCDateTime, TimestampMixin
 
 
-class Article(Base):
-    """A news article ingested by one of the news extractors.
-
-    Attributes:
-        id:           Auto-incrementing primary key.
-        url:          Canonical article URL — unique, used for deduplication.
-        title:        Headline text.
-        author:       Byline (nullable).
-        publisher:    Outlet name, e.g. ``Reuters``, ``Bloomberg``.
-        source:       Extractor identifier that produced this row, e.g. ``rss``.
-        content:      Full article body text (plain text, no HTML).
-        published_at: Publication timestamp reported by the source.
-        fetched_at:   Timestamp this row was inserted (set by the DB).
-        sentiment_score:
-                      Signed tone in ``[-1.0, 1.0]`` produced by the
-                      ``sentiment`` transform — ``+1`` strongly positive,
-                      ``-1`` strongly negative, ``0`` neutral. ``NULL`` means
-                      either "not scored yet" or "scored, but the article had
-                      no usable text"; consult ``transform_log`` to tell the
-                      two apart.
-        tickers:      Linked ticker associations.
-    """
+class Article(TimestampMixin, Base):
+    """A single news article."""
 
     __tablename__ = "articles"
+    __table_args__ = {"schema": SCHEMA_NEWS}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    #: The deduplication key for the whole news pipeline.
     url: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+
     title: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     author: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    publisher: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    source: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     content: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    published_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    fetched_at: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, server_default=func.now()
+
+    #: Who published the article — ``Reuters``, ``Bloomberg``.
+    publisher: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+
+    #: Which *extractor* produced this row — ``rss``, ``fnspid``. Was ``source``,
+    #: which gave no clue how it differed from ``publisher``.
+    ingest_source: Mapped[str] = mapped_column(String(32), nullable=False)
+
+    #: Event time, always tz-aware. NOT NULL on purpose: an article with no
+    #: timestamp cannot enter a time series, so it is not worth a row.
+    #: ``ArticleRepository.insert_articles()`` filters and counts the ones
+    #: extractors emit without a date rather than letting the INSERT raise.
+    published_at: Mapped[datetime] = mapped_column(
+        UTCDateTime, nullable=False, index=True
     )
+
+    #: Signed FinBERT score in ``[-1.0, 1.0]``; ``NULL`` means "not scored" or
+    #: "no usable text" — ``news.article_transforms`` disambiguates.
+    #: See ``docs/SENTIMENT_TRANSFORM.md``.
     sentiment_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
-    __table_args__ = (
-        Index("ix_articles_published_at", "published_at"),
-    )
-
-    tickers: Mapped[List["ArticleTicker"]] = relationship(
-        "ArticleTicker",
+    securities: Mapped[List["ArticleSecurity"]] = relationship(  # noqa: F821
+        "ArticleSecurity",
         back_populates="article",
         cascade="all, delete-orphan",
     )

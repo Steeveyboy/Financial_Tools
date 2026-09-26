@@ -1,7 +1,8 @@
 """
 db/repository.py
 
-Data access layer for the ``articles`` and ``article_tickers`` tables.
+Data access layer for the ``news`` schema — ``articles``,
+``article_securities`` and ``article_transforms``.
 
 Backed by the ORM models in :mod:`findata.models` and SQLAlchemy 2.0 sessions
 from :mod:`findata.db.session`. Callers never construct raw SQL; the rest of
@@ -19,11 +20,11 @@ Usage:
 
     repo.create_tables()
     repo.insert_articles(rows)
-    repo.link_tickers(article_id=1, tickers=["AAPL", "MSFT"])
+    repo.link_symbols(article_id=1, symbols=["AAPL", "MSFT"])
 
 Reads return plain ``dict`` rows — the same shape the extraction/transform
 pipeline already consumes (``a["url"]``, ``a["id"]`` etc.). Internally the
-methods drive the ORM ``Article`` / ``ArticleTicker`` mappers.
+methods drive the ORM ``Article`` / ``ArticleSecurity`` mappers.
 """
 
 from __future__ import annotations
@@ -38,13 +39,15 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from findata.db.session import get_engine
-from findata.models import Article, ArticleTicker, Base, TransformLog
+from findata.db.base import schema_translate_map_for
+from findata.db.session import create_schemas, get_engine
+from findata.db.types import ensure_utc
+from findata.models import Article, ArticleSecurity, ArticleTransform, Base
 
 _logger = logging.getLogger(__name__)
 
 # Valid column names for the articles table — used to strip extra keys
-# (e.g. 'mentioned_tickers') before issuing INSERT statements.
+# (e.g. 'mentioned_symbols') before issuing INSERT statements.
 _ARTICLE_COLUMNS: frozenset[str] = frozenset(
     c.name for c in Article.__table__.c
 )
@@ -58,10 +61,10 @@ def _article_to_dict(a: Article) -> dict[str, Any]:
         "title": a.title,
         "author": a.author,
         "publisher": a.publisher,
-        "source": a.source,
+        "ingest_source": a.ingest_source,
         "content": a.content,
         "published_at": a.published_at,
-        "fetched_at": a.fetched_at,
+        "created_at": a.created_at,
         "sentiment_score": a.sentiment_score,
     }
 
@@ -70,8 +73,18 @@ class ArticleRepository:
     """Read/write access to the news article store."""
 
     def __init__(self, engine: Engine | None = None):
-        """Build a repository against *engine* (or findata's default)."""
-        self.engine: Engine = engine if engine is not None else get_engine()
+        """Build a repository against *engine* (or findata's default).
+
+        An injected engine gets the schema translate map applied here, so a
+        caller can hand over a plain ``create_engine("sqlite://")`` without
+        knowing that the models declare schemas. ``get_engine()`` has already
+        done this for the default engine; re-applying is harmless.
+        """
+        engine = engine if engine is not None else get_engine()
+        translate_map = schema_translate_map_for(engine.dialect.name)
+        if translate_map:
+            engine = engine.execution_options(schema_translate_map=translate_map)
+        self.engine: Engine = engine
         self._SessionFactory: sessionmaker = sessionmaker(
             bind=self.engine,
             autoflush=False,
@@ -86,31 +99,31 @@ class ArticleRepository:
         """Return a fresh ORM session bound to this repository's engine."""
         return self._SessionFactory()
 
-    def _transform_log_insert_stmt(self):
+    def _article_transform_insert_stmt(self):
         """Return a dialect-aware ``INSERT ... ON CONFLICT DO NOTHING`` for
-        :class:`TransformLog`, falling back to a plain insert on dialects
+        :class:`ArticleTransform`, falling back to a plain insert on dialects
         that don't support upsert. Lets a partially-failed transform batch be
-        re-run without violating the ``(article_id, transform_id)`` key.
+        re-run without violating the ``(article_id, transform_name)`` key.
         """
         dialect = self.engine.dialect.name
         if dialect == "postgresql":
-            return pg_insert(TransformLog).on_conflict_do_nothing()
+            return pg_insert(ArticleTransform).on_conflict_do_nothing()
         if dialect == "sqlite":
-            return sqlite_insert(TransformLog).on_conflict_do_nothing()
-        return insert(TransformLog)
+            return sqlite_insert(ArticleTransform).on_conflict_do_nothing()
+        return insert(ArticleTransform)
 
-    def _article_ticker_insert_stmt(self):
+    def _article_security_insert_stmt(self):
         """Return a dialect-aware ``INSERT ... ON CONFLICT DO NOTHING`` for
-        :class:`ArticleTicker`, falling back to a plain insert on dialects
+        :class:`ArticleSecurity`, falling back to a plain insert on dialects
         that don't support upsert. Lets transforms be re-run safely without
-        violating the ``(article_id, ticker)`` primary key.
+        violating the ``(article_id, symbol)`` primary key.
         """
         dialect = self.engine.dialect.name
         if dialect == "postgresql":
-            return pg_insert(ArticleTicker).on_conflict_do_nothing()
+            return pg_insert(ArticleSecurity).on_conflict_do_nothing()
         if dialect == "sqlite":
-            return sqlite_insert(ArticleTicker).on_conflict_do_nothing()
-        return insert(ArticleTicker)
+            return sqlite_insert(ArticleSecurity).on_conflict_do_nothing()
+        return insert(ArticleSecurity)
 
     # ------------------------------------------------------------------
     # Schema management
@@ -121,12 +134,13 @@ class ArticleRepository:
 
         In production use ``alembic upgrade head`` instead.
         """
+        create_schemas(self.engine)
         Base.metadata.create_all(
             self.engine,
             tables=[
                 Article.__table__,
-                ArticleTicker.__table__,
-                TransformLog.__table__,
+                ArticleSecurity.__table__,
+                ArticleTransform.__table__,
             ],
         )
         _logger.debug("Database tables are ready")
@@ -139,86 +153,142 @@ class ArticleRepository:
         """Insert a batch of articles, skipping any whose URL already exists.
 
         Each dict in *rows* should contain the article fields defined on the
-        :class:`Article` model. ``fetched_at`` is set automatically by the
-        database via its ``server_default``.
+        :class:`Article` model. ``created_at`` / ``updated_at`` are set by the
+        database via their ``server_default``.
+
+        Rows are filtered in three passes before insertion:
+
+        1. **No ``published_at``** — dropped. The column is ``NOT NULL`` because
+           an article with no timestamp cannot enter a time series, and
+           extractors legitimately produce ``None`` for malformed feed entries.
+           Filtering here rather than letting the INSERT raise is REPO_REVIEW #4.
+        2. **URL already in the database** — skipped.
+        3. **URL duplicated inside this batch** — skipped. FNSPID emits the same
+           URL once per mentioned symbol.
+
+        ``published_at`` is normalized to aware UTC on the way through; see
+        :func:`findata.db.types.ensure_utc`.
 
         Args:
             rows: List of article dicts to insert.
 
         Returns:
-            Number of rows actually inserted (duplicates excluded).
+            Number of rows actually inserted.
         """
         start_time = time.perf_counter()
         if not rows:
             return 0
 
-        existing = self._existing_urls({r["url"] for r in rows})
+        # Pass 1 — drop rows that cannot satisfy NOT NULL published_at.
+        dated: list[dict] = []
+        undated = 0
+        for r in rows:
+            if r.get("published_at") is None:
+                undated += 1
+                _logger.debug("Dropping article with no published_at: %s", r.get("url"))
+                continue
+            dated.append(r)
 
-        # Deduplicate within the batch itself — FNSPID has the same URL
-        # under multiple tickers, producing duplicate rows in one batch.
+        if undated:
+            _logger.warning(
+                "Dropped %d of %d articles with no published_at "
+                "(the column is NOT NULL — an undated article cannot be used)",
+                undated,
+                len(rows),
+            )
+
+        if not dated:
+            return 0
+
+        existing = self._existing_urls({r["url"] for r in dated})
+
+        # Passes 2 and 3 — dedupe against the database and within the batch.
         seen: set[str] = set()
         to_insert: list[dict] = []
-        for r in rows:
+        for r in dated:
             if r["url"] not in existing and r["url"] not in seen:
                 seen.add(r["url"])
                 to_insert.append(r)
 
         if not to_insert:
             _logger.info(
-                "All %d articles already present — nothing to insert", len(rows)
+                "All %d articles already present — nothing to insert", len(dated)
             )
             return 0
 
-        # Strip keys that aren't table columns (e.g. 'mentioned_tickers') so
-        # the bulk INSERT compiler doesn't complain about unknown columns.
-        clean_rows = [
-            {k: v for k, v in r.items() if k in _ARTICLE_COLUMNS}
-            for r in to_insert
-        ]
+        # Strip keys that aren't table columns (e.g. 'mentioned_symbols') so the
+        # bulk INSERT compiler doesn't complain, and normalize timestamps.
+        clean_rows = []
+        for r in to_insert:
+            row = {k: v for k, v in r.items() if k in _ARTICLE_COLUMNS}
+            row["published_at"] = ensure_utc(row["published_at"])
+            clean_rows.append(row)
 
         with self._session() as session:
             session.execute(insert(Article), clean_rows)
             session.commit()
 
-        skipped = len(rows) - len(to_insert)
+        duplicates = len(dated) - len(to_insert)
         _logger.info(
-            "Inserted %d articles%s in %.3fs",
+            "Inserted %d articles%s%s in %.3fs",
             len(to_insert),
-            f" (skipped {skipped} duplicates)" if skipped else "",
+            f" (skipped {duplicates} duplicates)" if duplicates else "",
+            f" (dropped {undated} undated)" if undated else "",
             time.perf_counter() - start_time,
         )
         return len(to_insert)
 
-    def link_tickers(self, article_id: int, tickers: list[str]) -> None:
-        """Associate a list of ticker symbols with an article.
+    def link_symbols(
+        self,
+        article_id: int,
+        symbols: list[str],
+        link_source: str = "extractor",
+    ) -> None:
+        """Associate symbols with an article.
 
-        Called by the entity-extraction transformer after it identifies
-        company mentions in the article content.
+        Symbols are uppercased before insert — ``article_securities`` has a
+        ``CHECK (symbol = upper(symbol))`` so that a string join to
+        ``market.daily_bars`` or ``reference.companies`` cannot miss on case
+        alone.
 
         Args:
-            article_id: The ``articles.id`` value.
-            tickers:    Ticker symbols found in the article (e.g. ``["AAPL"]``).
+            article_id:  The ``news.articles.id`` value.
+            symbols:     Symbols mentioned in the article, e.g. ``["AAPL"]``.
+            link_source: How the link was established — ``extractor`` when the
+                         feed supplied it, ``entity_transform`` when it was
+                         inferred from the text. The two have very different
+                         precision, so the provenance is stored.
         """
-        if not tickers:
+        if not symbols:
             return
 
-        # Dedupe — the composite PK (article_id, ticker) forbids duplicates.
-        unique = sorted(set(tickers))
-        rows = [{"article_id": article_id, "ticker": t} for t in unique]
+        # Dedupe — the composite PK (article_id, symbol) forbids duplicates.
+        unique = sorted({s.strip().upper() for s in symbols if s and s.strip()})
+        if not unique:
+            return
+
+        rows = [
+            {"article_id": article_id, "symbol": s, "link_source": link_source}
+            for s in unique
+        ]
 
         with self._session() as session:
-            session.execute(self._article_ticker_insert_stmt(), rows)
+            session.execute(self._article_security_insert_stmt(), rows)
             session.commit()
-        _logger.debug("Linked %d tickers to article %d", len(unique), article_id)
+        _logger.debug("Linked %d symbols to article %d", len(unique), article_id)
 
-    def bulk_link_tickers(self, links: list[dict]) -> None:
-        """Insert many ``(article_id, ticker)`` pairs in one operation.
+    def bulk_link_symbols(
+        self, links: list[dict], link_source: str = "extractor"
+    ) -> None:
+        """Insert many ``(article_id, symbol)`` pairs in one operation.
 
-        More efficient than :meth:`link_tickers` per article when processing
-        a batch of articles with known tickers.
+        More efficient than :meth:`link_symbols` per article when processing a
+        batch of articles with known symbols.
 
         Args:
-            links: List of dicts with keys ``article_id`` and ``ticker``.
+            links:       Dicts with keys ``article_id`` and ``symbol``. A
+                         per-row ``link_source`` overrides the argument.
+            link_source: Default provenance for rows that don't carry one.
         """
         if not links:
             return
@@ -227,15 +297,28 @@ class ArticleRepository:
         seen: set[tuple[int, str]] = set()
         unique: list[dict] = []
         for link in links:
-            key = (link["article_id"], link["ticker"])
-            if key not in seen:
-                seen.add(key)
-                unique.append(link)
+            symbol = (link.get("symbol") or "").strip().upper()
+            if not symbol:
+                continue
+            key = (link["article_id"], symbol)
+            if key in seen:
+                continue
+            seen.add(key)
+            unique.append(
+                {
+                    "article_id": link["article_id"],
+                    "symbol": symbol,
+                    "link_source": link.get("link_source", link_source),
+                }
+            )
+
+        if not unique:
+            return
 
         with self._session() as session:
-            session.execute(self._article_ticker_insert_stmt(), unique)
+            session.execute(self._article_security_insert_stmt(), unique)
             session.commit()
-        _logger.debug("Bulk linked %d ticker associations", len(unique))
+        _logger.debug("Bulk linked %d symbol associations", len(unique))
 
     # ------------------------------------------------------------------
     # Reads
@@ -249,7 +332,7 @@ class ArticleRepository:
         This enables the transform step to be run independently of extraction —
         new transforms can be applied to the full historical article set.
 
-        Implemented as an anti-join against ``transform_log``: an article is
+        Implemented as an anti-join against ``news.article_transforms``: an article is
         "untransformed" when no ``(article_id, transform_name)`` row exists.
         Because the log records the *attempt*, articles that legitimately
         produced no result (empty content, model failure) are not retried on
@@ -267,11 +350,11 @@ class ArticleRepository:
         stmt = (
             select(Article)
             .outerjoin(
-                TransformLog,
-                (TransformLog.article_id == Article.id)
-                & (TransformLog.transform_id == transform_name),
+                ArticleTransform,
+                (ArticleTransform.article_id == Article.id)
+                & (ArticleTransform.transform_name == transform_name),
             )
-            .where(TransformLog.article_id.is_(None))
+            .where(ArticleTransform.article_id.is_(None))
             .order_by(Article.id)
         )
         if limit is not None:
@@ -286,11 +369,11 @@ class ArticleRepository:
             select(func.count())
             .select_from(Article)
             .outerjoin(
-                TransformLog,
-                (TransformLog.article_id == Article.id)
-                & (TransformLog.transform_id == transform_name),
+                ArticleTransform,
+                (ArticleTransform.article_id == Article.id)
+                & (ArticleTransform.transform_name == transform_name),
             )
-            .where(TransformLog.article_id.is_(None))
+            .where(ArticleTransform.article_id.is_(None))
         )
         with self._session() as session:
             return session.execute(stmt).scalar_one()
@@ -298,7 +381,7 @@ class ArticleRepository:
     def mark_transformed(self, article_ids: list[int], transform_name: str) -> None:
         """Record that *transform_name* has been applied to *article_ids*.
 
-        Safe to call repeatedly — duplicate ``(article_id, transform_id)``
+        Safe to call repeatedly — duplicate ``(article_id, transform_name)``
         pairs are ignored. Call this for every article the transform *saw*,
         including ones that produced no value, so they aren't reprocessed on
         the next run.
@@ -311,11 +394,11 @@ class ArticleRepository:
             return
 
         rows = [
-            {"article_id": aid, "transform_id": transform_name}
+            {"article_id": aid, "transform_name": transform_name}
             for aid in sorted(set(article_ids))
         ]
         with self._session() as session:
-            session.execute(self._transform_log_insert_stmt(), rows)
+            session.execute(self._article_transform_insert_stmt(), rows)
             session.commit()
         _logger.debug(
             "Marked %d articles as transformed by '%s'", len(rows), transform_name
@@ -371,15 +454,16 @@ class ArticleRepository:
             for article in session.execute(stmt).scalars():
                 yield _article_to_dict(article)
 
-    def get_by_ticker(self, ticker: str) -> list[dict]:
-        """Return all articles linked to a given ticker, newest first.
+    def get_by_symbol(self, symbol: str) -> list[dict]:
+        """Return all articles linked to a given symbol, newest first.
 
-        Requires entity extraction to have populated ``article_tickers``.
+        Requires ``news.article_securities`` to have been populated, either by
+        an extractor that supplied symbols or by the entity transform.
         """
         stmt = (
             select(Article)
-            .join(ArticleTicker, Article.id == ArticleTicker.article_id)
-            .where(ArticleTicker.ticker == ticker)
+            .join(ArticleSecurity, Article.id == ArticleSecurity.article_id)
+            .where(ArticleSecurity.symbol == symbol.strip().upper())
             .order_by(Article.published_at.desc())
         )
         with self._session() as session:
