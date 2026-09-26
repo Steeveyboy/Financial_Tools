@@ -9,7 +9,8 @@ Paths below are authoritative as of 2026-08-21 — see [`REPO_MAP.md`](REPO_MAP.
 
 1. Create `findata/sources/news/extractors/<name>.py`.
 2. Subclass `ArticleExtractor` (`extractors/base.py`).
-3. Set `source_id` — a unique short string, e.g. `"newsapi"`.
+3. Set `ingest_source` — a unique short string, e.g. `"newsapi"`. It is stored
+   in `news.articles.ingest_source`.
 4. Implement `extract() -> list[dict]`. Each dict needs at minimum:
    - `url` (str) — canonical URL, the deduplication key
    - `title` (str)
@@ -17,7 +18,7 @@ Paths below are authoritative as of 2026-08-21 — see [`REPO_MAP.md`](REPO_MAP.
    - optional: `author`, `publisher`, `content` (plain text, no HTML)
 5. For large/streaming sources, override `extract_batches()` instead — see
    `extractors/huggingface.py` (FNSPID streams 15M rows in batches).
-6. If the source already knows the tickers, add `mentioned_tickers: list[str]`
+6. If the source already knows the symbols, add `mentioned_symbols: list[str]`
    and the pipeline links them at load time — no `EntityTransformer` needed.
 7. Register it in `load_news_articles.py`.
 8. Add dependencies to `findata/sources/news/requirements.txt`.
@@ -27,12 +28,13 @@ Paths below are authoritative as of 2026-08-21 — see [`REPO_MAP.md`](REPO_MAP.
 
 1. Create `findata/sources/news/transformers/<name>.py`.
 2. Subclass `ArticleTransformer` (`transformers/base.py`).
-3. Set `transform_id` — a unique short string, e.g. `"sentiment"`.
+3. Set `transform_name` — a unique short string, e.g. `"sentiment"`. It is stored
+   in `news.article_transforms.transform_name`.
 4. Implement `transform(articles: list[dict]) -> list[dict]`:
    - add derived fields as new keys on each dict
    - handle `content is None` gracefully (set the derived field to `None`)
    - log a summary (count, min/max/mean)
-5. Add a persistence branch for your `transform_id` in
+5. Add a persistence branch for your `transform_name` in
    `TransformationPipeline._persist()` (`findata/sources/news/pipeline.py`).
 6. New column? Add it to the model in `findata/models/` **and** write a migration.
 

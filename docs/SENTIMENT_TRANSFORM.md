@@ -7,9 +7,9 @@ FinBERT scoring for news articles, end to end. Implements REPO_REVIEW #6.
 | File | Change |
 |---|---|
 | `findata/models/article.py` | `sentiment_score` column (`Float`, nullable) |
-| `findata/models/transform_log.py` | **new** — `TransformLog` model |
-| `findata/models/__init__.py` | registers `TransformLog` |
-| `findata/db/migrations/versions/0004_sentiment_and_transform_log.py` | **new** — migration `0004` |
+| `findata/models/article_transform.py` | **new** — `ArticleTransform` model (was `transform_log.py` / `TransformLog`) |
+| `findata/models/__init__.py` | registers `ArticleTransform` |
+| `findata/db/migrations/versions/0004_sentiment_and_transform_log.py` | **new** — migration `0004` (since squashed into `0001_baseline.py`) |
 | `findata/sources/news/db/repository.py` | real `get_untransformed()`, plus `count_untransformed()`, `mark_transformed()`, `update_sentiment_scores()` |
 | `findata/sources/news/transformers/sentiment.py` | FinBERT implementation (was a stub) |
 | `findata/sources/news/pipeline.py` | batched/resumable transform loop, `_persist()` sentiment branch |
@@ -33,19 +33,19 @@ collapse to ~0. Both are uninformative for a directional signal, so that's
 acceptable. If the distinction ever matters, store the three class
 probabilities rather than encoding them in one float.
 
-### `transform_log` records the *attempt*, not the result
+### `article_transforms` records the *attempt*, not the result
 
 A row means "transform X ran on article Y", whatever the outcome. This is what
 lets a `NULL` `sentiment_score` mean two different things safely:
 
-- no `transform_log` row → never scored, will be picked up
-- `transform_log` row + `NULL` score → scored, but the article had no usable
+- no `news.article_transforms` row → never scored, will be picked up
+- `news.article_transforms` row + `NULL` score → scored, but the article had no usable
   text; **not** retried
 
 Without this, every empty-content article gets rescored on every run forever.
 
 Composite PK `(article_id, transform_id)` + dialect-aware
-`INSERT … ON CONFLICT DO NOTHING` (same pattern as `article_tickers`) makes it
+`INSERT … ON CONFLICT DO NOTHING` (same pattern as `news.article_securities`) makes it
 idempotent, so a partially-failed batch can just be re-run.
 
 ### Batched and resumable
@@ -56,7 +56,7 @@ FinBERT over the full ~1.9M-row FNSPID set is hours of compute — an
 interrupted run must not start over.
 
 On an unhandled batch failure the pipeline logs the error and stops that
-transformer **without** writing to `transform_log`, so the batch stays pending
+transformer **without** writing to `news.article_transforms`, so the batch stays pending
 and the next run retries it.
 
 ### Label positions read from model config

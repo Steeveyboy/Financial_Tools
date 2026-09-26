@@ -15,7 +15,7 @@ flowchart LR
         YF[yfinance<br/>OHLCV + profiles]
     end
     subgraph findata["findata/ — Postgres warehouse"]
-        EX[Extractors] --> DB[(articles · article_tickers<br/>daily_ohlcv · companies)]
+        EX[Extractors] --> DB[(news.articles · news.article_securities<br/>market.daily_bars · reference.companies)]
         DB --> TR[Transformers<br/>sentiment · entities] --> DB
     end
     RSS --> EX
@@ -31,7 +31,8 @@ flowchart LR
 - **A repository layer as the sole SQL boundary** (`ArticleRepository`), with dialect-aware `INSERT … ON CONFLICT DO NOTHING` upserts that run identically on Postgres and SQLite.
 - **Large-scale backfill engineering** — the FNSPID load streams 15M rows in deduplicated batches with bulk ticker linking (two queries per batch, not 2×N).
 
-The repo is mid-consolidation toward a single `findata/` package; [`docs/CLEANUP_PLAN.md`](docs/CLEANUP_PLAN.md) is the structural roadmap and [`REPO_REVIEW.md`](REPO_REVIEW.md) the prioritized findings.
+The repo is mid-consolidation toward a single `findata/` package; [`docs/CLEANUP_PLAN.md`](docs/CLEANUP_PLAN.md) is the structural roadmap and [`docs/REPO_REVIEW.md`](docs/REPO_REVIEW.md) the prioritized findings, and
+[`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) the schema and naming standard.
 
 New here — human or agent? [`docs/REPO_MAP.md`](docs/REPO_MAP.md) is the navigation
 source of truth: paths, entry points, and the renamed directories that older docs
@@ -41,11 +42,11 @@ still reference.
 
 | Module | Role | Storage | Notes |
 |---|---|---|---|
-| [`findata/`](findata/) | Warehouse package — ORM `Base`, models, Alembic tree, and source ETL packages under `findata/sources/` | Postgres / SQLite | Tables: `exchanges`, `companies`, `insiders`, `articles`, `article_tickers`, `daily_ohlcv`. SQLAlchemy 2.0 ORM + Alembic |
-| [`findata/sources/news/`](findata/sources/news/) | News ETL — RSS + FNSPID extractors, sentiment / entity transformer stubs | (writes to findata) | `ArticleRepository` over the `articles` / `article_tickers` ORM models |
+| [`findata/`](findata/) | Warehouse package — ORM `Base`, models, Alembic tree, and source ETL packages under `findata/sources/` | Postgres / SQLite | Schemas: `reference` (`exchanges`, `companies`, `insiders`), `market` (`daily_bars`), `news` (`articles`, `article_securities`, `article_transforms`). SQLAlchemy 2.0 ORM + Alembic |
+| [`findata/sources/news/`](findata/sources/news/) | News ETL — RSS + FNSPID extractors, sentiment / entity transformer stubs | (writes to findata) | `ArticleRepository` over the `news.articles` / `news.article_securities` ORM models |
 | [`findata/sources/market/`](findata/sources/market/) | Daily OHLCV loader (yfinance) | (writes to findata) | `python -m findata.sources.market.fetch_stock_data` |
 | [`descriptions/`](descriptions/) | yfinance profile loader that populates `findata` | (writes to findata) | `populate_db.py` (Phase 4: fold into `findata/sources/corporate/`) |
-| [`SentimentAnalysis/`](SentimentAnalysis/) | Legacy Flask demo app | none | Kept functional; will move to `legacy/` in cleanup Phase 5 |
+| [`legacy/SentimentAnalysis/`](legacy/SentimentAnalysis/) | Legacy Flask demo app | none | Kept functional, out of scope for the warehouse (cleanup Phase 5, done) |
 | [`notebooks/`](notebooks/) | Exploratory Jupyter notebooks | — | Throwaway exploration, not imported by pipeline code |
 
 ## Setup
@@ -87,7 +88,7 @@ Financial_Tools/
 │       ├── news/           #   News ETL — extractors, transformers, ArticleRepository
 │       └── market/         #   Daily OHLCV loader
 ├── descriptions/           # yfinance profile loader (Phase 4: pending fold-in)
-├── SentimentAnalysis/      # Legacy Flask app (Phase 5: move to legacy/)
+├── legacy/SentimentAnalysis/  # Legacy Flask app — out of scope
 ├── notebooks/              # Exploratory notebooks
 ├── docs/                   # Plans + generated schema reference
 ├── load_news_articles.py   # News ETL entry point

@@ -22,16 +22,22 @@ The repo is mid-migration. The active development focus is the news source under
 | touch anything | [`docs/REPO_MAP.md`](docs/REPO_MAP.md) — paths, entry points, dead paths, invariants |
 | add an extractor / transformer / table / test | [`docs/RECIPES.md`](docs/RECIPES.md) |
 | debug something odd | [`docs/discoveries/INDEX.md`](docs/discoveries/INDEX.md) — what previous agents learned the hard way |
-| pick work | "Current Priorities" below, then [`REPO_REVIEW.md`](REPO_REVIEW.md) |
+| pick work | "Current Priorities" below, then [`docs/REPO_REVIEW.md`](docs/REPO_REVIEW.md) |
 | change the repo's shape | [`docs/CLEANUP_PLAN.md`](docs/CLEANUP_PLAN.md) |
 | work on news internals | [`findata/sources/news/README.md`](findata/sources/news/README.md) |
 | work on sentiment | [`docs/SENTIMENT_TRANSFORM.md`](docs/SENTIMENT_TRANSFORM.md) |
+| touch the schema, a table, or a column name | [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) — the naming standard, enforced by tests |
 
 `docs/REPO_MAP.md` is the navigation source of truth. If another document
 disagrees with it about a path, REPO_MAP wins — and fix the other document.
 
 ## How to be a good agent
 
+- **Announce the blast radius before you touch anything.** Before making any
+  changes, review every file that needs to be modified and print a list to the
+  chat — one line per file, saying why it needs to change. Then wait for the go
+  ahead. No silent edits, and no discovering a sixth file to rewrite halfway
+  through.
 - **Don't run commands that need the user's input.** No interactive prompts, no
   `alembic upgrade` against the user's live Postgres, no long-running servers.
   Write the code, then hand the user the exact command to run and review.
@@ -61,7 +67,7 @@ The repo is a portfolio piece first. Work in this order:
 1. **Make something run / show** — README positioning (engine role, architecture
    diagram, "what this demonstrates") and visible proof the pipelines run.
 2. **The interesting half** — sentiment transform end-to-end (REPO_REVIEW #6):
-   migration `0004` (`sentiment_score`, `transform_log`), FinBERT scoring, the
+   migration `0004` (`sentiment_score`, `article_transforms`), FinBERT scoring, the
    `_persist()` branch, `transform_news.py`. Then the sentiment overlay in the demo.
 3. **Tests + honest CI** (REPO_REVIEW #1): no `|| echo` escape in CI, pytest
    against in-memory SQLite.
@@ -76,8 +82,8 @@ their code.
 - **No raw SQL outside a repository class** (`ArticleRepository` for news).
 - **`logging` with a module-level `_logger`, never `print()`.**
 - **Sentiment is local FinBERT** — no Claude/OpenAI API calls in this backend repo.
-- **`SentimentAnalysis/` is off limits.** Legacy Flask app, unrelated to the
-  warehouse, kept only until Phase 5 moves it to `legacy/`.
+- **`legacy/SentimentAnalysis/` is off limits.** Legacy Flask app, unrelated to
+  the warehouse. Phase 5 moved it to `legacy/`; it stays there.
 - **Don't run migrations or DDL against the user's Postgres.** Verify against
   SQLite; leave the real command to the user.
 
@@ -88,24 +94,24 @@ Entry points at the repo root: `load_news_articles.py` (news ETL), `Makefile` (c
 The pipeline has two independent phases so transforms can be re-run retroactively without re-fetching:
 
 ```
-Phase 1 — Extraction:  Extractor(s) → ArticleRepository.insert_articles() → articles / article_tickers tables
-Phase 2 — Transform:   articles table → Transformer(s) → sentiment_score column / article_tickers table
+Phase 1 — Extraction:  Extractor(s) → ArticleRepository.insert_articles() → news.articles / news.article_securities
+Phase 2 — Transform:   news.articles → Transformer(s) → sentiment_score column / news.article_securities
 ```
 
 **Key design points:**
-- The `articles` / `article_tickers` tables are ORM models in `findata.models` (`Article`, `ArticleTicker`). `findata/sources/news/db/repository.py` (`ArticleRepository`) drives them through SQLAlchemy 2.0 sessions.
+- The `news.articles` / `news.article_securities` tables are ORM models in `findata.models` (`Article`, `ArticleSecurity`). `findata/sources/news/db/repository.py` (`ArticleRepository`) drives them through SQLAlchemy 2.0 sessions.
 - `ArticleRepository()` falls back to `findata.db.session.get_engine()` when no engine is passed in (so callers can just write `ArticleRepository()` against the configured `DATABASE_URL`).
-- `ArticleExtractor` subclasses define `source_id` and `extract() -> list[dict]`. URL is the deduplication key.
-- If an extractor dict includes `mentioned_tickers`, the pipeline links them at load time (no EntityTransformer needed).
-- `article_tickers` has a composite primary key `(article_id, ticker)`. Inserts use dialect-aware `INSERT … ON CONFLICT DO NOTHING` (Postgres + SQLite) so transforms can be re-run safely.
+- `ArticleExtractor` subclasses define `ingest_source` and `extract() -> list[dict]`. URL is the deduplication key.
+- If an extractor dict includes `mentioned_symbols`, the pipeline links them at load time (no EntityTransformer needed).
+- `news.article_securities` has a composite primary key `(article_id, symbol)`. Inserts use dialect-aware `INSERT … ON CONFLICT DO NOTHING` (Postgres + SQLite) so transforms can be re-run safely.
 - `ArticleRepository` is the sole SQL layer — never write raw SQL outside it.
-- `get_untransformed()` is a stub that currently returns all articles; a `transform_log` table is the planned fix.
-- `TransformationPipeline._persist()` has a TODO branch for each `transform_id` — add persistence logic there when implementing a new transformer.
+- `get_untransformed()` is a real anti-join against `news.article_transforms`, which records the transform *attempt* so unusable articles aren't retried forever.
+- `TransformationPipeline._persist()` has a TODO branch for each `transform_name` — add persistence logic there when implementing a new transformer.
 
 **Setup:**
 ```bash
 pip install -r findata/sources/news/requirements.txt
-export DATABASE_URL="sqlite:///resonance.db"   # or postgresql://...
+export DATABASE_URL="sqlite:///resonance_desk.db"   # or postgresql://...
 ```
 
 Run the pipeline from the project root (`Financial_Tools/`): `python load_news_articles.py`.
@@ -119,11 +125,11 @@ The target home for the whole warehouse (see `docs/CLEANUP_PLAN.md`). Structure:
 - `findata/config.py` — `DATABASE_URL` / `ECHO_SQL`, loads `<repo_root>/.env`.
 - `findata/sources/` — extract/transform packages for each upstream source. Currently `findata/sources/news/` (RSS + FNSPID); `market/`, `corporate/`, `sec/` arrive in later phases.
 
-`python -m findata` runs `init_db()` (dev convenience); `alembic upgrade head` is the production path. Currently holds the corporate tables (`exchanges`, `companies`, `insiders`) and the news tables (`articles`, `article_tickers`); market / SEC tables migrate in per the cleanup plan. `companies` has dialect-conditional full-text search (Postgres GIN / SQLite FTS5) — see `models/company.py`.
+`python -m findata` runs `init_db()` (dev convenience); `alembic upgrade head` is the production path. Tables live in three Postgres schemas — `reference` (`exchanges`, `companies`, `insiders`), `market` (`daily_bars`), `news` (`articles`, `article_securities`, `article_transforms`) — collapsed to the default schema on SQLite via `schema_translate_map`. SEC tables migrate in per the cleanup plan. `companies` has dialect-conditional full-text search (Postgres GIN / SQLite FTS5) — see `models/company.py`.
 
-## SentimentAnalysis
+## legacy/SentimentAnalysis
 
-You won't be working with SentimentAnalysis/ section of the repo it is a legacy project that remains in the repo.
+You won't be working with the `legacy/SentimentAnalysis/` section of the repo; it is a legacy project that remains in the repo.
 
 
 ## SEC / XBRL (Phase 6)

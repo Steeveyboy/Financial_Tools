@@ -22,7 +22,7 @@ Financial_Tools/
 │       └── market/              # yfinance OHLCV
 ├── descriptions/                # yfinance company-profile loader (writes into findata)
 ├── notebooks/                   # throwaway exploration; never imported by pipeline code
-├── SentimentAnalysis/           # LEGACY Flask app — do not work here
+├── legacy/SentimentAnalysis/    # LEGACY Flask app — do not work here
 ├── tests/                       # pytest, in-memory SQLite
 ├── docs/                        # plans, recipes, discoveries
 ├── load_news_articles.py        # entry point: extraction
@@ -38,7 +38,7 @@ Financial_Tools/
 | Load news from RSS | `python load_news_articles.py --rss` or `make news` |
 | Backfill news from FNSPID | `python load_news_articles.py --fnspid` or `make news-fnspid` |
 | Run transforms over stored articles | `python transform_news.py` |
-| Load OHLCV | `python -m findata.sources.market.fetch_stock_data AAPL MSFT` |
+| Load OHLCV | `python -m findata.sources.market.fetch_stock_data AAPL MSFT` (creates `market` schema + `market.daily_bars` if missing) |
 | Run the tests | `python -m pytest` (from repo root) |
 
 Everything is run **from the repo root**. Nothing is `pip install`-ed; imports
@@ -52,7 +52,7 @@ resolve because the repo root is on `sys.path` (pytest gets this from
 | Where is X? How do I run it? | this file |
 | How do I add an extractor / transformer / migration? | [`docs/RECIPES.md`](RECIPES.md) |
 | Why is the repo shaped this way, what's the target shape? | [`docs/CLEANUP_PLAN.md`](CLEANUP_PLAN.md) |
-| What's known-broken and what should I work on? | [`REPO_REVIEW.md`](../REPO_REVIEW.md) + CLAUDE.md "Current Priorities" |
+| What's known-broken and what should I work on? | [`REPO_REVIEW.md`](REPO_REVIEW.md) + CLAUDE.md "Current Priorities" |
 | How does the news ETL work internally? | [`findata/sources/news/README.md`](../findata/sources/news/README.md) |
 | How is sentiment supposed to work? | [`docs/SENTIMENT_TRANSFORM.md`](SENTIMENT_TRANSFORM.md) |
 | Something non-obvious a previous agent learned the hard way | [`docs/discoveries/`](discoveries/INDEX.md) |
@@ -71,14 +71,17 @@ renamed. Do not grep for them, do not create them:
 | `market_data/tickers.json` | `findata/sources/market/tickers.json` | Cleanup Phase 3 |
 | `FinancialWebScrapers/` | removed (commit `e8e90a8`); Phase 6 re-adds `findata/sources/sec/` | — |
 
-`docs/schema.sql` is a **stale hand-written snapshot** (pre-`daily_ohlcv`, pre-sentiment).
+`docs/schema.sql` is a **stale hand-written snapshot**, predating the 2026-09
+rebuild entirely (it still shows `daily_ohlcv` / `article_tickers` and no schemas).
+[`DATA_MODEL.md`](DATA_MODEL.md) is the current schema reference; `findata/models/`
+is the source of truth.
 The authoritative schema is `findata/models/` + the Alembic tree. Never read
 `schema.sql` to answer "what columns does this table have".
 
 ## Search hygiene
 
 Two `.venv/` trees are checked out in the working directory (`./.venv/` and
-`./SentimentAnalysis/.venv/`) holding tens of thousands of files.
+`./legacy/SentimentAnalysis/.venv/`) holding tens of thousands of files.
 
 - **Use `rg` / the Grep tool** — both respect `.gitignore`, so venvs are excluded automatically.
 - **Avoid bare `find .`** — it does not respect `.gitignore` and will bury the
@@ -92,8 +95,8 @@ Two `.venv/` trees are checked out in the working directory (`./.venv/` and
 - **One `Base`, one Alembic tree.** A new table means a model file under
   `findata/models/`, an import in `findata/models/__init__.py` (autogenerate
   discovers models through that import), and a migration.
-- **URL is the article dedup key**; `article_tickers` has composite PK
+- **URL is the article dedup key**; `news.article_securities` has composite PK
   `(article_id, ticker)` and inserts are `ON CONFLICT DO NOTHING`, so
   extraction and transforms are re-runnable.
 - **`logging`, never `print()`** — module-level `_logger`.
-- **`SentimentAnalysis/` is out of scope.** It is legacy and unrelated to the warehouse.
+- **`legacy/SentimentAnalysis/` is out of scope.** It is legacy and unrelated to the warehouse.

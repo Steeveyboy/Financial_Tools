@@ -1,7 +1,7 @@
 # findata.sources.news — News ETL
 
 Ingests financial news articles from multiple sources into the `articles` /
-`article_tickers` tables of the findata warehouse for downstream analysis —
+`news.article_securities` tables of the findata warehouse for downstream analysis —
 sentiment scoring, entity extraction, and correlation with market price data.
 
 Part of the [Resonance Desk](../../../README.md) data warehouse.
@@ -16,11 +16,11 @@ The pipeline is split into two independent phases:
 Phase 1 — Extraction (run on a schedule)
   Extractor A ──┐
   Extractor B ──┼──► ArticleRepository.insert_articles() ──► articles table
-  Extractor N ──┘                                         ──► article_tickers table
+  Extractor N ──┘                                    ──► news.article_securities
 
 Phase 2 — Transformation (run separately, can be re-run at any time)
   articles table ──► SentimentTransformer  ──► sentiment_score column
-                 ──► EntityTransformer     ──► article_tickers table
+                 ──► EntityTransformer     ──► news.article_securities
 ```
 
 Keeping extraction and transformation separate means:
@@ -34,7 +34,7 @@ Keeping extraction and transformation separate means:
 findata/
   models/
     article.py             # Article ORM model (defines the articles table)
-    article_ticker.py      # ArticleTicker ORM model (composite PK)
+    article_security.py    # ArticleSecurity ORM model (composite PK)
   sources/
     news/
       config.py            # DATABASE_URL and environment variable loading
@@ -73,7 +73,7 @@ ORM models. Migrations live in the single Alembic tree at
 | `published_at` | DATETIME | Publication timestamp |
 | `fetched_at` | DATETIME | Row insert timestamp (server default `now()`) |
 
-**`article_tickers`** — links articles to the companies they mention
+**`news.article_securities`** — links articles to the symbols they mention
 
 | Column | Type | Notes |
 |---|---|---|
@@ -97,9 +97,9 @@ pip install -r findata/sources/news/requirements.txt
 **2. Set the database URL**
 
 ```bash
-export DATABASE_URL="postgresql://user:pass@localhost:5432/resonance"
+export DATABASE_URL="postgresql://user:pass@localhost:5432/resonance_desk"
 # or for local development:
-export DATABASE_URL="sqlite:///resonance.db"
+export DATABASE_URL="sqlite:///resonance_desk.db"
 ```
 
 Add this to a `.env` file at the project root to avoid setting it every session.
@@ -168,7 +168,7 @@ Create a new file in `extractors/` that subclasses `ArticleExtractor`:
 from .base import ArticleExtractor
 
 class MySourceExtractor(ArticleExtractor):
-    source_id = "my_source"   # stored in articles.source column
+    ingest_source = "my_source"   # stored in news.articles.ingest_source
 
     def extract(self) -> list[dict]:
         # Fetch articles from your source here.
@@ -194,15 +194,15 @@ ExtractionPipeline(engine=None, extractors=[
 ```
 
 If your source already knows which tickers an article is about, include a
-`mentioned_tickers` field (list of strings) in each dict — the pipeline will
-link them to the `article_tickers` table at load time without needing to run
+`mentioned_symbols` field (list of strings) in each dict — the pipeline will
+link them to the `news.article_securities` table at load time without needing to run
 the `EntityTransformer`.
 
 ```python
 {
     "url":               "https://...",
     "title":             "Apple reports record earnings",
-    "mentioned_tickers": ["AAPL"],   # linked immediately on insert
+    "mentioned_symbols": ["AAPL"],   # linked immediately on insert
     ...
 }
 ```

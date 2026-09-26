@@ -37,7 +37,7 @@ tests/
 
 - In-memory SQLite only. Use the `engine` / `repo` fixtures already defined in
   `tests/conftest.py` — don't re-create them per file, and never read `DATABASE_URL`.
-- `article_tickers` has a composite PK `(article_id, ticker)`; duplicate inserts
+- `news.article_securities` has a composite PK `(article_id, symbol)`; duplicate inserts
   are silently skipped via `INSERT … ON CONFLICT DO NOTHING`, not raised.
 - Worth covering: insert, deduplication (across batches *and* within one batch),
   `link_tickers`, `get_by_ticker`, `get_ids_by_urls`, `get_all`.
