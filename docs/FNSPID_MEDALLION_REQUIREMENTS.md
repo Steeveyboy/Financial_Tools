@@ -21,7 +21,8 @@ current FNSPID load is fragile), [`SENTIMENT_TRANSFORM.md`](SENTIMENT_TRANSFORM.
 
 The current path is `FNSPIDExtractor` (HuggingFace `datasets`) →
 `ExtractionPipeline` → `ArticleRepository` → Postgres, row by row in Python.
-It has three structural problems:
+This work **changes how FNSPID is loaded** (§5.1). The current path has three
+structural problems:
 
 | Problem | Evidence |
 |---|---|
@@ -101,9 +102,10 @@ first implementation step (FR-B5) before silver rules are finalised.
 | Symbol casing — *verify* | Upper-case in silver regardless (warehouse `CHECK symbol = upper(symbol)`) |
 | Fraction of rows with a body / with summaries — *verify* | Drives Q6 |
 
-Drift noted while researching (not fixed here — see §14): discovery 006 says
-`_iter_rows` loads with `streaming=True`, but the code at `0b37b1b` passes
-`streaming=False`.
+Drift noted while researching: discovery 006 says `_iter_rows` loads with
+`streaming=True`, but the code at `0b37b1b` passes `streaming=False`. With
+`streaming=False`, `datasets` converts the whole file to Arrow before returning
+a single row. The new load path in §5.1 replaces this code rather than fixing it.
 
 ## 5. Architecture
 
@@ -118,6 +120,37 @@ HF Hub           │                                                            
   immutable)     │                                                                                   │
                  └───────────────────────────── built by `dbt build` (dbt-duckdb) ────────────────────┘
 ```
+
+### 5.1 How loading changes, and where streaming belongs
+
+This work **replaces** the FNSPID load path; it does not sit beside it.
+
+| | Today | After |
+|---|---|---|
+| Fetch | HF `datasets.load_dataset()` per CSV, parsed row by row in Python | Raw CSV bytes downloaded once to `data/raw/fnspid/` |
+| Parse / type | pandas inside the `datasets` CSV builder, fought with an all-string `Features` schema | DuckDB `read_csv(all_varchar=true, union_by_name=true)` |
+| Clean / dedup / link | `_normalise()` + per-batch `insert_articles()` | dbt models over the whole dataset |
+| Write to Postgres | Every scanned row goes through Python | Only gold rows, already deduplicated, in batches |
+| Entry point | `load_news_articles.py --fnspid` → `FNSPIDExtractor` | `load_news_articles.py --fnspid` → `FNSPIDGoldExtractor` (FR-P6) |
+
+**Streaming decision.** Streaming is needed at two boundaries and not in the
+middle:
+
+1. **Download: streamed to disk (required).** The files are multi-GB and must
+   never be held in memory. `huggingface_hub` writes to disk in chunks and can
+   resume an interrupted download (FR-L5). HF `datasets` streaming mode is
+   **dropped**: it only existed to feed Python row by row, and its per-chunk
+   type inference caused discovery 006.
+2. **Bronze build: no streaming needed.** DuckDB reads the CSVs in parallel
+   chunks and spills to disk when it runs short of memory, so it never needs the
+   whole file in RAM. Loading the landed files beats streaming from the Hub
+   (`hf://` paths): every full rebuild would otherwise download everything again,
+   and the build would need the network. `hf://` is kept as a documented
+   fallback for machines without the disk space (Q10).
+3. **Publish: streamed out of DuckDB (required).** Gold is read with a cursor in
+   fixed-size batches (`fetchmany` or Arrow record batches), never with
+   `fetchall()`/`.df()` over the full table, so publish memory depends on batch
+   size and not on dataset size (FR-P7).
 
 Layer contract, in one line each:
 
@@ -145,6 +178,11 @@ count small enough to read in one sitting (target ≤ 8 models).
 - **FR-L3** `data/` is git-ignored. No dataset bytes are ever committed.
 - **FR-L4** Landing is the only step that needs the network. Every later step
   runs offline.
+- **FR-L5** The download streams to disk and can resume. Memory use is constant
+  whatever the file size. A partly downloaded file is never passed to bronze:
+  the manifest is written only once the size/checksum check passes.
+- **FR-L6** Before downloading, the command checks free disk space against the
+  expected file sizes and stops with a clear message if there isn't enough.
 
 ### 6.2 Bronze — the staging table
 
@@ -262,6 +300,17 @@ Stretch — needs the warehouse (read-only attach, Q7):
   in Python.
 - **FR-P5** Publish takes its target from `DATABASE_URL` like every other
   entry point; it works against SQLite for local verification.
+- **FR-P6** `load_news_articles.py --fnspid` and `make news-fnspid` switch to
+  the gold-backed extractor. When gold is missing, they fail with a message
+  naming the commands to build it, rather than falling back to the old path.
+  `--TICKERS` reaches the extractor from the Makefile too (REPO_REVIEW: the
+  target currently drops it).
+- **FR-P7** Publish reads gold in fixed-size batches (§5.1 point 3) and
+  deduplicates nothing itself. Each batch is ready to insert as it arrives.
+- **FR-P8** Once acceptance criterion 5 passes, the HF `datasets` path
+  (`FNSPIDExtractor._iter_rows`, `_DATA_FILES`, the `datasets` dependency if
+  nothing else uses it) is removed. Discovery 006 is then marked superseded,
+  not deleted.
 
 ## 7. Data quality — required dbt tests
 
@@ -377,8 +426,9 @@ The work is done when, on the user's machine:
 | Q5 | Publish enrichment columns to Postgres (`trade_date`, `url_domain`, `sentiment_text`, …)? That needs a model change + migration. | Not in MVP. Keep them in gold; revisit when the demo needs them |
 | Q6 | Keep the four FNSPID summary columns (`Lsa_summary` …) past silver? | Keep in silver, drop from gold unless profiling shows they're populated and useful |
 | Q7 | Trading-calendar source for FR-E3: weekday-only approximation, a seeded NYSE holiday list, or read-only attach of Postgres `market.daily_bars`? | Seeded holiday list for MVP (offline, deterministic); `daily_bars` attach is the stretch (FR-E6/E7) |
-| Q8 | Retire `FNSPIDExtractor` (HF `datasets` path) once this lands, or keep both? | Keep until acceptance criterion 5 is met, then remove it and discovery 006's workaround with it |
+| Q8 | How long does the old HF `datasets` path stay around? | It stops being the entry point as soon as publish lands (FR-P6), and the code is removed after acceptance criterion 5 (FR-P8). No period where two FNSPID loaders are both live |
 | Q9 | Scale of publish: all 15.7M rows through ORM batches, or a bulk path (Postgres `COPY` inside `ArticleRepository`)? | ORM batches for MVP with ticker/date filters; bulk path is a follow-up if a full publish is too slow |
+| Q10 | Disk budget: is there room for the raw CSVs plus the DuckDB file (roughly 2–3× the CSV size), or should bronze read over `hf://` instead? | Land locally (§5.1). Measure the file sizes in PR 1 and switch to `hf://` only if disk is the blocker |
 
 ## 14. Delivery plan (each ≈ one PR)
 
@@ -386,9 +436,11 @@ The work is done when, on the user's machine:
    profile, discovery note with the profile results. Answers Q3/Q6 with data.
 2. **Silver.** Articles, symbols, rejects, conservation test, fixture-driven pytest.
 3. **Gold + MVP enrichment.** FR-G*, FR-E1–E5, contracts.
-4. **Publish.** `LakehouseRepository`, `FNSPIDGoldExtractor`, Make targets,
-   T-3, README "how to run" + lineage screenshot.
-5. **Stretch.** Warehouse attach for FR-E6/E7; retire the old extractor (Q8).
+4. **Publish + cut-over.** `LakehouseRepository`, `FNSPIDGoldExtractor`,
+   `--fnspid` / Make targets switched to gold (FR-P6), T-3, README "how to
+   run" + lineage screenshot.
+5. **Retire + stretch.** Remove the HF `datasets` path (FR-P8); warehouse
+   attach for FR-E6/E7.
 
 Docs to update as part of these PRs (not done in this one): `REPO_MAP.md`
 (new paths and entry points), `CLAUDE.md` router table (a row pointing here) and
