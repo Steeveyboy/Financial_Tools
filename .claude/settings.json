@@ -27,7 +27,6 @@
       "Bash(.venv/bin/alembic upgrade:*)",
       "Bash(.venv/bin/alembic downgrade:*)",
       "Bash(psql:*)",
-      "Bash(git push:*)",
       "Read(./.env)"
     ]
   }
