@@ -38,4 +38,4 @@ jobs:
         env:
           DATABASE_URL: "sqlite://"
         run: |
-          python -m pytest
+          uv run pytest
