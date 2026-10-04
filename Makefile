@@ -40,11 +40,6 @@ market-data:
 corporate-db:
 	uv run python -m findata
 
-# ── SentimentAnalysis ────────────────────────────────────────────────────────
-
-sentiment:
-	cd SentimentAnalysis && python app.py
-
 # ── Lint ─────────────────────────────────────────────────────────────────────
 
 lint:
