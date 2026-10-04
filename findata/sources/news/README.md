@@ -45,6 +45,9 @@ findata/
         base.py            # ArticleExtractor abstract base class
         rss.py             # RSS/Atom feed extractor (Reuters Business)
         huggingface.py     # HuggingFace dataset extractor (FNSPID)
+        dojo.py            # dojo_stock_news staging table → articles
+      staging/
+        dojo.py            # AlphaDojo/dojo_stock_news → news.dojo_stock_news (raw copy)
       transformers/
         base.py            # ArticleTransformer abstract base class
         sentiment.py       # Sentiment scoring stub
@@ -215,6 +218,7 @@ the `EntityTransformer`.
 |---|---|---|---|
 | Reuters Business RSS | `RSSExtractor` | Live feed | Summary only |
 | FNSPID (HuggingFace) | `FNSPIDExtractor` | 1999–2023, 15.7M articles | Title only |
+| AlphaDojo/dojo_stock_news (HuggingFace, via staging table) | `DojoExtractor` | ~280K English + ~1.28M Chinese (eastmoney) articles | Summary (English); title only (eastmoney) |
 
 ## Planned transforms
 

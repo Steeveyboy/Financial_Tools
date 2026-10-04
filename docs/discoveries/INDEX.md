@@ -11,3 +11,4 @@ See [`README.md`](README.md) for when and how to add one.
 | 004 | [`insert_articles()` log call is malformed](004-insert-articles-log-call-is-malformed.md) | A "Logging error" traceback after inserts is cosmetic, not a failure |
 | 005 | [Postgres schemas + SQLite; `alembic check` lies](005-schemas-and-sqlite.md) | Schemas collapse via `schema_translate_map`; run `alembic check` on Postgres only, and use `sa.func.now()` not `sa.text("now()")` in migrations |
 | 006 | [FNSPID must be loaded per file with an all-string schema](006-fnspid-csv-type-inference.md) | `ArrowInvalid: Failed to parse string … as a scalar of type double` means pandas guessed a blank column as float; `dtype=str` does not exist in `datasets` 5.x, and the two CSVs have different headers |
+| 007 | [dojo_stock_news `symbol` is the scraped-from page](007-dojo-symbol-column.md) | Stored as `page_symbol`; article symbols are in `on_symbol_json`. One URL repeats hundreds of times |

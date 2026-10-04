@@ -19,6 +19,7 @@ Financial_Tools/
 │   ├── models/                  # one file per table; Base.metadata is authoritative
 │   └── sources/                 # one package per upstream data source
 │       ├── news/                # ACTIVE FOCUS — RSS + FNSPID extract, transforms
+│       │   └── staging/         # raw dataset copies (dojo) awaiting a transform into news.articles
 │       └── market/              # yfinance OHLCV
 ├── descriptions/                # yfinance company-profile loader (writes into findata)
 ├── notebooks/                   # throwaway exploration; never imported by pipeline code
@@ -26,6 +27,7 @@ Financial_Tools/
 ├── tests/                       # pytest, in-memory SQLite
 ├── docs/                        # plans, recipes, discoveries
 ├── load_news_articles.py        # entry point: extraction
+├── load_dojo_stock_news.py      # entry point: dojo dataset → news.dojo_stock_news staging
 └── transform_news.py            # entry point: transforms
 ```
 
@@ -37,6 +39,8 @@ Financial_Tools/
 | Apply migrations (production path) | `alembic upgrade head` (from repo root) |
 | Load news from RSS | `python load_news_articles.py --rss` or `make news` |
 | Backfill news from FNSPID | `python load_news_articles.py --fnspid` or `make news-fnspid` |
+| Stage AlphaDojo/dojo_stock_news (replaces the table each run) | `python load_dojo_stock_news.py [--limit N]` (creates `news.dojo_stock_news` if missing) |
+| Normalize staged dojo rows into `news.articles` | `python load_news_articles.py --no-rss --dojo` |
 | Run transforms over stored articles | `python transform_news.py` |
 | Load OHLCV | `python -m findata.sources.market.fetch_stock_data AAPL MSFT` (creates `market` schema + `market.daily_bars` if missing) |
 | Run the tests | `python -m pytest` (from repo root) |

@@ -6,6 +6,8 @@ Runs the news articles extraction pipeline against the configured database.
 Sources:
   - Reuters Business RSS feed (live articles)
   - FNSPID HuggingFace dataset (historical, filtered by symbol + date range)
+  - AlphaDojo/dojo_stock_news, read from the news.dojo_stock_news staging table
+    (stage it first with load_dojo_stock_news.py)
 
 Configuration (via .env or environment):
   DATABASE_URL    - SQLAlchemy connection string (required)
@@ -14,6 +16,7 @@ Configuration (via .env or environment):
 Usage:
   python load_news_articles.py
   python load_news_articles.py --fnspid --TICKERS AAPL MSFT --start-date 2020-01-01
+  python load_news_articles.py --no-rss --dojo
 """
 
 import argparse
@@ -23,6 +26,7 @@ import sys
 from sqlalchemy import create_engine
 
 from findata.sources.news.config import LOG_LEVEL, get_db_url
+from findata.sources.news.extractors.dojo import DojoExtractor
 from findata.sources.news.extractors.huggingface import FNSPIDExtractor
 from findata.sources.news.extractors.rss import RSSExtractor
 from findata.sources.news.pipeline import ExtractionPipeline
@@ -59,6 +63,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Run the FNSPID HuggingFace dataset extractor (default: off — slow)",
     )
     parser.add_argument(
+        "--dojo",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Normalize the news.dojo_stock_news staging table into news.articles "
+        "(default: off; run load_dojo_stock_news.py first)",
+    )
+    parser.add_argument(
         "--start-date",
         metavar="YYYY-MM-DD",
         help="FNSPID lower date bound (inclusive)",
@@ -81,8 +92,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
 def main() -> None:
     args = build_arg_parser().parse_args()
 
-    if not args.rss and not args.fnspid:
-        print("Error: No extractors enabled. Pass --rss and/or --fnspid.", file=sys.stderr)
+    if not args.rss and not args.fnspid and not args.dojo:
+        print(
+            "Error: No extractors enabled. Pass --rss, --fnspid and/or --dojo.",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     db_url = get_db_url()
@@ -102,6 +116,9 @@ def main() -> None:
                 batch_size=args.batch_size,
             )
         )
+
+    if args.dojo:
+        extractors.append(DojoExtractor(batch_size=args.batch_size))
 
     inserted = ExtractionPipeline(engine, extractors=extractors).run()
     _logger.info("Done — %d new article(s) inserted.", inserted)

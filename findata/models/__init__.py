@@ -25,6 +25,9 @@ from .company import Company
 # market — price time series
 from .daily_bar import DailyBar
 
+# news — staging copies of upstream datasets
+from .dojo_stock_news import DojoStockNews
+
 # reference — slowly-changing dimensions
 from .exchange import Exchange
 from .insider import Insider
@@ -45,4 +48,5 @@ __all__ = [
     "Article",
     "ArticleSecurity",
     "ArticleTransform",
+    "DojoStockNews",
 ]
