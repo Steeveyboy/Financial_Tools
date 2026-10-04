@@ -1,4 +1,4 @@
-.PHONY: help news news-fnspid article-stats market-data corporate-db sentiment
+.PHONY: help news news-fnspid article-stats market-data corporate-db sentiment lint
 
 
 # Default target
@@ -11,6 +11,7 @@ help:
 	@echo "  make market-data TICKERS='AAPL MSFT'  Fetch and store OHLCV data"
 	@echo "  make corporate-db                  Initialise / seed the corporate DB schema"
 	@echo "  make sentiment                     Start the SentimentAnalysis Flask app (port 5151)"
+	@echo "  make lint                          Lint with ruff (rules in pyproject.toml)"
 	@echo ""
 	@echo "  DATABASE_URL must be set in the environment or in .env before running any target."
 	@echo "  Example: export DATABASE_URL='postgresql://user:pass@localhost:5432/resonance'"
@@ -43,3 +44,8 @@ corporate-db:
 
 sentiment:
 	cd SentimentAnalysis && python app.py
+
+# ── Lint ─────────────────────────────────────────────────────────────────────
+
+lint:
+	uv run ruff check . --output-format=concise

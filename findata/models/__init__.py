@@ -15,20 +15,20 @@ from findata.db.base import (
     SCHEMA_REFERENCE,
     Base,
 )
-from .mixins import TimestampMixin, UTCDateTime
-
-# reference — slowly-changing dimensions
-from .exchange import Exchange
-from .company import Company
-from .insider import Insider
-
-# market — price time series
-from .daily_bar import DailyBar
 
 # news — articles and their derived data
 from .article import Article
 from .article_security import ArticleSecurity
 from .article_transform import ArticleTransform
+from .company import Company
+
+# market — price time series
+from .daily_bar import DailyBar
+
+# reference — slowly-changing dimensions
+from .exchange import Exchange
+from .insider import Insider
+from .mixins import TimestampMixin, UTCDateTime
 
 __all__ = [
     "ALL_SCHEMAS",

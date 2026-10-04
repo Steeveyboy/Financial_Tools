@@ -25,10 +25,10 @@ import logging
 from datetime import datetime
 from email.utils import parsedate_to_datetime
 
-from findata.db.types import ensure_utc
-
 import feedparser
 from bs4 import BeautifulSoup
+
+from findata.db.types import ensure_utc
 
 from .base import ArticleExtractor
 

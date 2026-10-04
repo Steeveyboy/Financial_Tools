@@ -33,12 +33,13 @@ Usage:
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Iterator
 from datetime import datetime
 
-from findata.db.types import ensure_utc
-import time
 from tqdm import tqdm
+
+from findata.db.types import ensure_utc
 
 from .base import ArticleExtractor
 

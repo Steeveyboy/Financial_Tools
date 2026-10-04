@@ -11,8 +11,8 @@ For granular imports, use the sub-packages directly::
     from findata.db.session import get_session, init_db
 """
 
-from findata.models import Base, Company, Exchange, Insider
 from findata.db.session import get_engine, get_session, init_db
+from findata.models import Base, Company, Exchange, Insider
 
 __all__ = [
     "Base",

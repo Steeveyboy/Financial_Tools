@@ -14,7 +14,7 @@ from sqlalchemy import Float, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from findata.db.base import SCHEMA_NEWS, Base
-from findata.models.mixins import UTCDateTime, TimestampMixin
+from findata.models.mixins import TimestampMixin, UTCDateTime
 
 
 class Article(TimestampMixin, Base):

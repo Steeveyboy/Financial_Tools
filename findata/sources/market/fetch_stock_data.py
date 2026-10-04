@@ -25,11 +25,10 @@ from datetime import date, datetime, timedelta
 
 import pandas as pd
 import yfinance as yf
-
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
+from sqlalchemy import insert as sa_insert
 from sqlalchemy.engine import Engine
 from tqdm import tqdm
-from sqlalchemy import insert as sa_insert
 
 from findata.db.session import create_schemas, get_engine
 from findata.models import DailyBar

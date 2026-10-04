@@ -7,6 +7,5 @@ Run with::
 
 from findata.db.session import main
 
-
 if __name__ == "__main__":
     main()

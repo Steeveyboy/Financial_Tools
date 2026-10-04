@@ -19,6 +19,7 @@ dependencies = [
     "pandas-datareader>=0.10.0",
     "psycopg>=3.3.6",
     "psycopg2-binary>=2.9",
+    "pytest>=9.1.1",
     "python-dotenv>=1.2.3",
     "soupsieve>=2.10",
     "sqlalchemy>=2.0.54",
@@ -37,7 +38,24 @@ log_cli_level = "WARNING"
 
 [tool.ruff]
 line-length = 100
+target-version = "py310"          # lowest version in the CI matrix
 exclude = [".venv", "legacy", "notebooks", "findata/db/migrations/versions"]
+
+[tool.ruff.lint]
+# Ruff's defaults, written out so they're easy to extend.
+# Add a family:   extend-select = ["I", "UP", "B"]
+# Silence a rule: ignore = ["E731"]
+# Look one up:    ruff rule F401
+# Add in future: T20, DTZ, UP, ARG, A, RUF, PR, LOG
+select = [
+    "E4", "E7", "E9", "F",
+    "I", "B"
+    ]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+# Silence a rule in specific files only, e.g.:
+# "tests/**" = ["F811"]
 
 [dependency-groups]
 # FinBERT sentiment scoring needs transformers AND torch; neither is required to
@@ -47,4 +65,7 @@ exclude = [".venv", "legacy", "notebooks", "findata/db/migrations/versions"]
 dev = [
     "torch>=2.0",
     "transformers>=5.17.0",
+]
+linting = [
+    "ruff>=0.16.10",
 ]

@@ -16,7 +16,8 @@
       "Bash(git branch:*)",
       "Bash(make help:*)",
       "Bash(.venv/bin/python -m pytest:*)",
-      "Bash(.venv/bin/python -m flake8:*)",
+      "Bash(.venv/bin/ruff check:*)",
+      "Bash(ruff check:*)",
       "Bash(.venv/bin/alembic current:*)",
       "Bash(.venv/bin/alembic history:*)",
       "Bash(.venv/bin/alembic heads:*)"

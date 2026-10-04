@@ -43,7 +43,8 @@ disagrees with it about a path, REPO_MAP wins — and fix the other document.
   Write the code, then hand the user the exact command to run and review.
 - **The user is particular.** Prefer producing reviewable output over acting.
 - **Verify what you can, cheaply.** `python -m pytest` from the repo root runs
-  against in-memory SQLite and touches nothing real — run it before reporting done.
+  against in-memory SQLite and touches nothing real, and `ruff check .` lints —
+  run both before reporting done.
   If you can't run something, say so and give the command.
 - **Read the `.md` files scattered around the repo** before inferring from code.
 - **Write down what you discover.** Non-obvious findings go in

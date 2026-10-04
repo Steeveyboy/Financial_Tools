@@ -55,6 +55,9 @@ Paths below are authoritative as of 2026-08-21 — see [`REPO_MAP.md`](REPO_MAP.
 
 - Location: `tests/` mirrors the package — `tests/findata/sources/news/test_repository.py`.
 - Runner: `python -m pytest` from the repo root.
+- Lint: `ruff check .` must pass too (CI blocks on it). For a rule exception,
+  prefer a `# noqa: CODE` on the line; broader ones go in `pyproject.toml`
+  under `[tool.ruff.lint]` (`ignore`) or `[tool.ruff.lint.per-file-ignores]`.
 - Database: in-memory SQLite. Use the `repo` / `engine` fixtures in
   `tests/conftest.py`; never touch `DATABASE_URL`.
 - Mock all external I/O — RSS feeds, HuggingFace, yfinance. No network in tests.
