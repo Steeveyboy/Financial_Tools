@@ -25,11 +25,10 @@ from datetime import date, datetime, timedelta
 
 import pandas as pd
 import yfinance as yf
-
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
+from sqlalchemy import insert as sa_insert
 from sqlalchemy.engine import Engine
 from tqdm import tqdm
-from sqlalchemy import insert as sa_insert
 
 from findata.db.session import create_schemas, get_engine
 from findata.models import DailyBar
@@ -286,10 +285,10 @@ def parse_tickers(filename: str) -> list[str]:
             data = json.load(f)
     except FileNotFoundError:
         _logger.error("Ticker file not found: %s", filename)
-        raise SystemExit(1)
+        raise SystemExit(1) from None
     except json.JSONDecodeError as exc:
         _logger.error("Invalid JSON in %s: %s", filename, exc)
-        raise SystemExit(1)
+        raise SystemExit(1) from exc
 
     try:
         tickers = [item["Ticker"] for item in data]
@@ -297,7 +296,7 @@ def parse_tickers(filename: str) -> list[str]:
         _logger.error(
             "Expected a list of objects with a 'Ticker' key in %s: %s", filename, exc
         )
-        raise SystemExit(1)
+        raise SystemExit(1) from exc
 
     _logger.info("Loaded %d tickers from %s", len(tickers), filename)
     return tickers

@@ -37,14 +37,13 @@ Usage:
 from __future__ import annotations
 
 import logging
+import time
 
 from sqlalchemy.engine import Engine
 
 from .db.repository import ArticleRepository
 from .extractors.base import ArticleExtractor
 from .transformers.base import ArticleTransformer
-
-import time
 
 _logger = logging.getLogger(__name__)
 

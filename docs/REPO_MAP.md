@@ -40,6 +40,7 @@ Financial_Tools/
 | Run transforms over stored articles | `python transform_news.py` |
 | Load OHLCV | `python -m findata.sources.market.fetch_stock_data AAPL MSFT` (creates `market` schema + `market.daily_bars` if missing) |
 | Run the tests | `python -m pytest` (from repo root) |
+| Lint | `ruff check .` or `make lint` (rules in `pyproject.toml` `[tool.ruff.lint]`) |
 
 Everything is run **from the repo root**. Nothing is `pip install`-ed; imports
 resolve because the repo root is on `sys.path` (pytest gets this from

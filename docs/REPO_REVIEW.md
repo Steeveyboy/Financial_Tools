@@ -214,6 +214,9 @@ Four separate `requirements.txt` files and no installable package. A single
 reads as professional engineering at a glance. Phase 7 of the cleanup plan;
 worth pulling forward.
 
+*Status (2026-10):* ruff has replaced flake8 in CI (config in `pyproject.toml`
+`[tool.ruff.lint]`). `pre-commit`, extras, and console scripts are still open.
+
 ### 12. Documentation drift — Impact: MEDIUM · Difficulty: LOW (~2 hours)
 
 The docs say Phase 3 is pending; the code says it shipped (PR #14):
