@@ -20,19 +20,18 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses:  astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install ruff pytest
-          pip install -r findata/sources/news/requirements.txt
+          uv sync --locked --no-dev --group linting
 
       - name: Lint with ruff
         # Scope and rules come from [tool.ruff] in pyproject.toml.
-        run: ruff check --output-format=github .
+        run: uv run ruff check --output-format=github .
 
       - name: Run tests
         env:
