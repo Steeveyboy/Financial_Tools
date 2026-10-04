@@ -202,7 +202,7 @@ class SentimentTransformer(ArticleTransformer):
         for start in range(0, len(texts), self.batch_size):
             scores.extend(self._score_batch(texts[start : start + self.batch_size]))
 
-        for idx, score in zip(scorable, scores):
+        for idx, score in zip(scorable, scores, strict=True):
             articles[idx]["sentiment_score"] = score
 
         self._log_summary(scores)
