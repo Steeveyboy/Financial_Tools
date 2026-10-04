@@ -17,4 +17,4 @@ from temptable t
 join resonance_desk.news.articles a on a.id = t.article_id
 where t.symbol_count > 1
 and t.symbol_count < 50
-order by t.symbol_count desc;
+order by t.symbol_count desc
