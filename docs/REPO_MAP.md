@@ -39,7 +39,7 @@ Financial_Tools/
 | Apply migrations (production path) | `alembic upgrade head` (from repo root) |
 | Load news from RSS | `python load_news_articles.py --rss` or `make news` |
 | Backfill news from FNSPID | `python load_news_articles.py --fnspid` or `make news-fnspid` |
-| Stage AlphaDojo/dojo_stock_news (replaces the table each run) | `python load_dojo_stock_news.py [--limit N]` (creates `news.dojo_stock_news` if missing) |
+| Stage AlphaDojo/dojo_stock_news (appends rows not staged yet; `--replace` clears first) | `python load_dojo_stock_news.py [--limit N] [--replace]` (creates `news.dojo_stock_news` if missing; a table from before migration `0003` needs `alembic upgrade head`) |
 | Normalize staged dojo rows into `news.articles` | `python load_news_articles.py --no-rss --dojo` |
 | Run transforms over stored articles | `python transform_news.py` |
 | Load OHLCV | `python -m findata.sources.market.fetch_stock_data AAPL MSFT` (creates `market` schema + `market.daily_bars` if missing) |

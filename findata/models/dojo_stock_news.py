@@ -4,9 +4,11 @@ models/dojo_stock_news.py
 Staging table for the AlphaDojo/dojo_stock_news HuggingFace dataset.
 
 A raw copy of the dataset: every source column is kept, as text, exactly as it
-arrives. No deduplication, no parsing — the same article URL appears once per
-stock page it was scraped from. A later transform normalizes these rows into
-``news.articles`` / ``news.article_securities``.
+arrives. No parsing — the same article URL appears once per stock page it was
+scraped from, so a row is identified by ``(url, page_symbol)``. That pair is
+unique, which is what lets the loader append only rows it has not staged yet.
+``extractors/dojo.py`` normalizes these rows into ``news.articles`` /
+``news.article_securities``.
 
 This table deliberately breaks the "named for what a row is, not its source"
 rule in ``docs/DATA_MODEL.md``: a staging table *is* its source.
@@ -22,7 +24,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from sqlalchemy import Integer, Text
+from sqlalchemy import Index, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from findata.db.base import SCHEMA_NEWS, Base
@@ -63,7 +65,12 @@ class DojoStockNews(TimestampMixin, Base):
     publisher_logo: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     source: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    __table_args__ = ({"schema": SCHEMA_NEWS},)
+    __table_args__ = (
+        # The loader's ON CONFLICT target. An index rather than a constraint so
+        # the migration needs no table rebuild on SQLite.
+        Index("ix_dojo_stock_news_url_page_symbol", "url", "page_symbol", unique=True),
+        {"schema": SCHEMA_NEWS},
+    )
 
     def __repr__(self) -> str:
         return f"<DojoStockNews(id={self.id}, url={self.url!r})>"

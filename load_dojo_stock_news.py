@@ -2,9 +2,10 @@
 load_dojo_stock_news.py
 
 Loads the AlphaDojo/dojo_stock_news HuggingFace dataset, as-is, into the
-``news.dojo_stock_news`` staging table. Each run replaces the table's contents.
+``news.dojo_stock_news`` staging table. Each run appends the rows that are not
+staged yet (by ``url`` + ``page_symbol``); ``--replace`` clears the table first.
 
-A separate transform (not yet written) normalizes staging rows into
+``load_news_articles.py --dojo`` then normalizes staging rows into
 ``news.articles`` / ``news.article_securities``.
 
 Configuration (via .env or environment):
@@ -14,6 +15,7 @@ Configuration (via .env or environment):
 Usage:
   python load_dojo_stock_news.py
   python load_dojo_stock_news.py --limit 1000
+  python load_dojo_stock_news.py --replace
 """
 
 import argparse
@@ -44,12 +46,18 @@ def main() -> None:
     )
     parser.add_argument(
         "--limit", type=int, default=None, metavar="N",
-        help="Load only the first N rows (default: all)",
+        help="Read only the first N rows (default: all)",
+    )
+    parser.add_argument(
+        "--replace", action="store_true",
+        help="Clear the staging table before loading (default: append new rows)",
     )
     args = parser.parse_args()
 
-    loaded = load_dojo_stock_news(batch_size=args.batch_size, limit=args.limit)
-    _logger.info("Done — %d row(s) in dojo_stock_news.", loaded)
+    appended = load_dojo_stock_news(
+        batch_size=args.batch_size, limit=args.limit, replace=args.replace,
+    )
+    _logger.info("Done — %d new row(s) appended to dojo_stock_news.", appended)
 
 
 if __name__ == "__main__":

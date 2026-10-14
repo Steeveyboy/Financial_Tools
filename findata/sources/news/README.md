@@ -47,7 +47,7 @@ findata/
         huggingface.py     # HuggingFace dataset extractor (FNSPID)
         dojo.py            # dojo_stock_news staging table → articles
       staging/
-        dojo.py            # AlphaDojo/dojo_stock_news → news.dojo_stock_news (raw copy)
+        dojo.py            # AlphaDojo/dojo_stock_news → news.dojo_stock_news (raw copy, appended per run)
       transformers/
         base.py            # ArticleTransformer abstract base class
         sentiment.py       # Sentiment scoring stub
